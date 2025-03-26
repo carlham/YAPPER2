@@ -71,5 +71,5 @@ def search_tweets_by_hashtag(db: Session, hashtag: str):
     return db.query(models.Tweet).filter(models.Tweet.content.ilike(f"%{hashtag}")).all()
 
 #Searching for users containing the specified query
-def searhc_users(db: Session, query: str)
+def searhc_users(db: Session, query: str):
     return db.query(models.User).filter(models.User.username.ilike(f"%{query}")).all()
