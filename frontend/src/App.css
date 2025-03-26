@@ -1,6 +1,3 @@
-.App {
-}
-
 header {
   font-family: 'Trebuchet MS', sans-serif;
   background-image: linear-gradient(to right, blue, white);
@@ -32,6 +29,7 @@ button {
   font-size: 1rem;
   margin: 1px;
   font-weight: bold;
+  cursor: pointer;
 }
 
 .action-area {
@@ -95,6 +93,10 @@ main {
   color: white;
 }
 
+.createYap:hover {
+  background-color: green;
+}
+
 .yap {
   border-right: solid 2px black;
   border-top: solid 2px white;
@@ -121,4 +123,59 @@ main {
 
 .yap p {
   margin: .3rem;
+}
+
+.logoutBtn:hover, .closePopup:hover {
+  background-color: red;
+  color: white;
+}
+
+.infoBtn:hover {
+  background-color: blue;
+  color: white;
+}
+
+.searchBtn:hover {
+  background-color: orange;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
+}
+
+.popup {
+  background-color: #D3D0C9;
+  padding: .2rem;
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+  width: 300px;
+  display: block;
+  border-right: solid 2px black;
+  border-top: solid 2px white;
+  border-left: solid 2px white;
+  border-bottom: solid 2px black;
+}
+
+.popupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-image: linear-gradient(to right, blue, white);
+  padding: .1rem;
+}
+
+.popupHeader h2 {
+  color: white;
+  margin: 0;
+  margin-left: .2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
 }

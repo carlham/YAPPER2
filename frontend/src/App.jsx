@@ -28,20 +28,38 @@ function App() {
   // sorts yapps by date
   const sortedYapps = yapps.sort((a, b) => new Date(b.date) - new Date(a.date));
 
+  // displays an alert with information about Yapper
+  const aboutYapper = () => {
+    document.querySelector('.overlay').style.display = 'flex';
+  }
+
+  const closePopup = () => {
+    document.querySelector('.overlay').style.display = 'none';
+  }
+
   return (
     <div className="App">
+      <div className="overlay">
+        <div className="popup">
+          <div className="popupHeader">
+            <h2>About Yapper</h2>
+            <button className="closePopup" title="Close" onClick={closePopup}>X</button>
+          </div>
+          <p>Yapper is an improved version of Twitter, with a much more suitable name, because let's be honest, people don't usually post anything of importance, they just yapping! Enjoy this hellhole of peoples thoughts and feelings nobody but themselves care about.</p>
+        </div>
+      </div>
       <header>
        <h1>Yapper</h1>
        <div className="header-buttons">
-        <button>?</button>
-        <button>X</button>
+        <button className="infoBtn" title="About Yapper" onClick={aboutYapper}>?</button>
+        <button className="logoutBtn" title="Logout">X</button>
        </div>
       </header>
       <div className="action-area">
         <button className="createYap">Create Yap</button>
         <div>
           <input type="text" placeholder="Search Yapper..." />
-          <button><img src={searchIcon} alt="search icon" /></button>
+          <button className="searchBtn" title="Search"><img src={searchIcon} alt="search icon" /></button>
         </div>
       </div>
       <nav>
