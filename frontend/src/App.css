@@ -38,7 +38,7 @@ button {
   justify-content: space-between;
 }
 
-input {
+input, textarea {
   font-family: 'Trebuchet MS', sans-serif;
   background-color: white;
   border-radius: 0;
@@ -50,7 +50,7 @@ input {
   margin: 1px;
 }
 
-input:focus {
+input:focus, textarea:focus {
   outline: none;
 }
 
@@ -86,6 +86,11 @@ main {
   border-left: solid 2px white;
   border-bottom: solid 2px black;
   padding: .5rem 1rem 1rem 1rem;
+  overflow-y: scroll;
+}
+
+main:has(form) {
+  margin-top: 1rem;
 }
 
 .createYap {
@@ -178,4 +183,73 @@ main {
   margin-left: .2rem;
   font-size: 1.1rem;
   font-weight: 600;
+}
+
+.createYapForm {
+  display: flex;
+  flex-direction: column;
+  padding: .5rem;
+}
+
+.createYapForm label {
+  margin: .2rem 0;
+}
+
+.createYapForm textarea {
+  resize: vertical;
+  height: 7rem;
+}
+
+.createYapForm button {
+  margin-top: .5rem;
+  background-color: limegreen;
+  color: white;
+}
+
+.createYapForm button:hover {
+  background-color: green;
+}
+
+.loginForm, .registerForm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: .5rem;
+  width: 20rem;
+  margin: 0 auto;
+}
+
+.loginForm button, .registerForm button {
+  margin-top: .5rem;
+}
+
+.loginForm button:hover, .registerForm button:hover {
+  background-color: #b4afa3;
+}
+
+.loginForm div, .registerForm div {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.authTitle {
+  font-size: 1.5rem;
+  margin: .5rem;
+  margin-top: 1rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.logregText {
+  font-size: 1rem;
+  margin: .5rem;
+  text-align: center;
+}
+
+.logregText a {
+  color: rgb(70, 111, 200);
+  padding: .2rem .5rem;
+  font-size: 1rem;
 }

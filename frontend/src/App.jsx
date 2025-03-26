@@ -31,21 +31,85 @@ function App() {
   // displays an alert with information about Yapper
   const aboutYapper = () => {
     document.querySelector('.overlay').style.display = 'flex';
+    document.querySelector('#popupTitle').innerHTML = 'About Yapper';
+    document.querySelector('#popupContent').innerHTML = `
+      <p>Yapper is an improved version of Twitter, with a much more suitable name, because let's be honest, people don't usually post anything of importance, they just yapping! Enjoy this hellhole of peoples thoughts and feelings nobody but themselves care about.</p>
+    `;
+  }
+
+  const createYap = () => {
+    document.querySelector('.overlay').style.display = 'flex';
+    document.querySelector('#popupTitle').innerHTML = 'Create Yap';
+    document.querySelector('#popupContent').innerHTML = `
+      <form class="createYapForm">
+        <label for="yapContent">Yap:</label>
+        <textarea id="yapContent" name="yapContent"></textarea>
+        <button type="submit">Post</button>
+      </form>
+    `;
   }
 
   const closePopup = () => {
     document.querySelector('.overlay').style.display = 'none';
   }
 
+  if(window.location.pathname === '/login') {
+    return (
+      <div className="App">
+        <header>
+          <h1>Yapper</h1>
+        </header>
+        <main>
+          <h2 className="authTitle">Login to Yapper</h2>
+          <form className="loginForm">
+            <div>
+              <label for="loginUsername">Username:</label>
+              <input type="text" id="loginUsername" name="loginUsername" />
+              <label for="loginPassword">Password:</label>
+              <input type="password" id="loginPassword" name="loginPassword" />
+              <button type="submit">Login</button>
+            </div>
+          </form>
+          <p className="logregText">Don't have an account? <a href="/register">Register</a></p>
+        </main>
+      </div>
+    );
+  }
+  if(window.location.pathname === '/register') {
+    return (
+      <div className="App">
+        <header>
+          <h1>Yapper</h1>
+        </header>
+        <main>
+          <h2 className="authTitle">Register a Yapper account</h2>
+          <form className="registerForm">
+            <div>
+              <label for="registerUsername">Username:</label>
+              <input type="text" id="registerUsername" name="registerUsername" />
+              <label for="registerPassword">Password:</label>
+              <input type="password" id="registerPassword" name="registerPassword" />
+              <label for="registerPasswordRepeat">Repeat password:</label>
+              <input type="password" id="registerPasswordRepeat" name="registerPasswordRepeat" />
+              <button type="submit">Register</button>
+            </div>
+          </form>
+          <p className="logregText">Already have an account? <a href="/login">Login</a></p>
+        </main>
+      </div>
+    );
+  }
+
+
   return (
     <div className="App">
       <div className="overlay">
         <div className="popup">
           <div className="popupHeader">
-            <h2>About Yapper</h2>
+            <h2 id="popupTitle"></h2>
             <button className="closePopup" title="Close" onClick={closePopup}>X</button>
           </div>
-          <p>Yapper is an improved version of Twitter, with a much more suitable name, because let's be honest, people don't usually post anything of importance, they just yapping! Enjoy this hellhole of peoples thoughts and feelings nobody but themselves care about.</p>
+          <div id="popupContent"></div>
         </div>
       </div>
       <header>
@@ -56,14 +120,14 @@ function App() {
        </div>
       </header>
       <div className="action-area">
-        <button className="createYap">Create Yap</button>
+        <button className="createYap" onClick={createYap}>Create Yap</button>
         <div>
           <input type="text" placeholder="Search Yapper..." />
           <button className="searchBtn" title="Search"><img src={searchIcon} alt="search icon" /></button>
         </div>
       </div>
       <nav>
-        <a href="#" className="pageSelected">Home</a>
+        <a href="/" className="pageSelected">Home</a>
       </nav>
       <main>
         {/* displays each yap in the object array */}
