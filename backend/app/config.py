@@ -1,1 +1,1 @@
-DATABASE_URL = "postgresql://postgres:jacob123@localhost:5432/YapperDB"
+DATABASE_URL = "postgresql://postgres:2345@localhost/Yapper" # replace with own database URL for development
