@@ -4,7 +4,7 @@ from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-
+#lollol
 #USER CRUD FUNCTIONS
 
 #Retrieving a user by their id
