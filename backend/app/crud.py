@@ -1,10 +1,17 @@
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 from sqlalchemy.orm import Session
 from . import models, schemas
 from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+<<<<<<< Updated upstream
 #lollol
+=======
+>>>>>>> Stashed changes
 #USER CRUD FUNCTIONS
 
 #Retrieving a user by their id
