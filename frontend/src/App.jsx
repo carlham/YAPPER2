@@ -104,6 +104,7 @@ function App() {
   return (
     <div className="App">
       <div className="overlay">
+        <div className="overlayCloser" onClick={closePopup}></div>
         <div className="popup">
           <div className="popupHeader">
             <h2 id="popupTitle"></h2>
