@@ -43,10 +43,33 @@ function App() {
     document.querySelector('#popupContent').innerHTML = `
       <form class="createYapForm">
         <label for="yapContent">Yap:</label>
-        <textarea id="yapContent" name="yapContent"></textarea>
+        <textarea id="yapContent" name="yapContent" maxlength="250" placeholder="Hey #Yapper ..."></textarea>
+        <div class="char-counter"><span id="charCount">250</span> characters left</div>
         <button type="submit">Post</button>
       </form>
     `;
+    
+    // set up the character counter after the popup content is added to the DOM
+    setTimeout(() => {
+      const textarea = document.getElementById('yapContent');
+      const charCountElement = document.getElementById('charCount');
+      
+      // the default value of the character counter
+      charCountElement.textContent = 250;
+      
+      // update character count on input event
+      textarea.addEventListener('input', () => {
+        const remaining = 250 - textarea.value.length;
+        charCountElement.textContent = remaining;
+        
+        // change color to red if less than 20 characters left
+        if (remaining < 20) {
+          charCountElement.style.color = 'red';
+        } else {
+          charCountElement.style.color = '';
+        }
+      });
+    }, 0);
   }
 
   const closePopup = () => {
