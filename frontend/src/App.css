@@ -267,6 +267,16 @@ main:has(form) {
   font-size: 1rem;
 }
 
+.char-counter {
+  font-size: 0.8rem;
+  text-align: right;
+  margin-top: 0.3rem;
+}
+
+#charCount {
+  font-weight: bold;
+}
+
 /* Windows 98 Scrollbar with some modification, from: https://gist.github.com/Dakedres/0ccda599648833a1c2f65d3967aa131b */
 
 body *::-webkit-scrollbar {
