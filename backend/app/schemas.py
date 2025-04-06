@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 from typing import Optional
 
@@ -35,11 +35,20 @@ class TweetBase(BaseModel):
 
 #Tweet creation schema, it inherits from tweetbase and doesnt need additional fields
 class TweetCreate(TweetBase):
+    content: str = Field(..., min_length=1, max_length=280) # forgot what we have on frontend, need to update later
     owner_id: int
+    
+    @field_validator('content')
+    def content_not_empty(cls, v):
+        if not v.strip():
+            raise ValueError('Content cannot be empty')
+        return v
+    
 
 #This schema represents a tweet 
 class Tweet(TweetBase):
     id: int
+    content: str
     owner_id: int
     created_at: datetime
     tags : Optional[str]

@@ -2,10 +2,14 @@ from fastapi import FastAPI, Depends
 import uvicorn
 from database import engine, Base
 from routes import users, tweets
+from middleware import RateLimitMiddleware
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(debug=True)
+
+# add middleware
+app.add_middleware(RateLimitMiddleware)
 
 # include users router
 app.include_router(users.router)
