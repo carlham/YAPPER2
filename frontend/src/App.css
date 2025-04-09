@@ -1,3 +1,9 @@
+.App {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
 header {
   font-family: 'Trebuchet MS', sans-serif;
   background-image: linear-gradient(to right, blue, white);
@@ -6,6 +12,7 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
 }
 
 header h1 {
@@ -33,7 +40,7 @@ button {
 }
 
 .action-area {
-  margin: .5rem 1rem;
+  margin: .5rem 1rem 0 1rem;
   display: flex;
   justify-content: space-between;
 }
@@ -80,13 +87,14 @@ nav a {
 main {
   margin: 1rem;
   margin-top: 0;
-  height: 500px;
+  flex-grow: 1;
   border-right: solid 2px black;
   border-top: solid 2px white;
   border-left: solid 2px white;
   border-bottom: solid 2px black;
   padding: .5rem 1rem 1rem 1rem;
-  overflow-y: scroll;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 main:has(form) {

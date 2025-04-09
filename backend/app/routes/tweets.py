@@ -14,8 +14,10 @@ router = APIRouter(
 
 # endpoints for tweets, get all tweets, create tweet, edit tweet and delete tweet 
 @router.get("", response_model=List[TweetResponse])
-def read_tweets(db: Session = Depends(get_db)):
-    tweets = db.query(TweetsModel).all()
+def read_tweets(db: Session = Depends(get_db), skip: int = None, limit: int = None): # pagination if wanted
+    tweets = db.query(TweetsModel).offset(skip).limit(limit).all()
+    if not tweets:
+        return {"error": "No tweets found"}
     return tweets
 
 # searching for tweets
@@ -52,7 +54,7 @@ def read_tweet(tweet_id: int, db: Session = Depends(get_db)):
 # when creating a tweet
 
 @router.post("", response_model=TweetResponse)
-def create_tweet(tweet: TweetCreate, db: Session = Depends(get_db)):
+def create_tweet(tweet: TweetCreate, db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
     # Extract hashtags from the content using regex
     # This regex finds words that start with a hashtag
     hashtags = re.findall(r'#(\w+)', tweet.content)
@@ -62,7 +64,7 @@ def create_tweet(tweet: TweetCreate, db: Session = Depends(get_db)):
 
     tweet = TweetsModel(
         content=tweet.content,
-        owner_id=tweet.owner_id,
+        owner_id=current_user_id, # use id from token
         tags=tags_string,
     )
 
