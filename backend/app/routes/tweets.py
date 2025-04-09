@@ -52,7 +52,7 @@ def read_tweet(tweet_id: int, db: Session = Depends(get_db)):
 # when creating a tweet
 
 @router.post("", response_model=TweetResponse)
-def create_tweet(tweet: TweetCreate, db: Session = Depends(get_db)):
+def create_tweet(tweet: TweetCreate, db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
     # Extract hashtags from the content using regex
     # This regex finds words that start with a hashtag
     hashtags = re.findall(r'#(\w+)', tweet.content)
@@ -62,7 +62,7 @@ def create_tweet(tweet: TweetCreate, db: Session = Depends(get_db)):
 
     tweet = TweetsModel(
         content=tweet.content,
-        owner_id=tweet.owner_id,
+        owner_id=current_user_id, # use id from token
         tags=tags_string,
     )
 
