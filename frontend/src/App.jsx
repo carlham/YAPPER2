@@ -72,6 +72,51 @@ function App() {
     }, 0);
   }
 
+  const editYap = (yapContent) => {
+    document.querySelector('.overlay').style.display = 'flex';
+    document.querySelector('#popupTitle').innerHTML = 'Edit Yap';
+    document.querySelector('#popupContent').innerHTML = `
+      <form class="createYapForm">
+        <label for="yapContent">Edit Yap:</label>
+        <textarea id="yapContent" name="yapContent" maxlength="250" placeholder="Hey #Yapper ...">${ yapContent }</textarea>
+        <div class="char-counter"><span id="charCount">250</span> characters left</div>
+        <button type="submit">Update Yap</button>
+      </form>
+    `;
+    
+    // set up the character counter after the popup content is added to the DOM
+    setTimeout(() => {
+      const textarea = document.getElementById('yapContent');
+      const charCountElement = document.getElementById('charCount');
+      
+      // the default value of the character counter
+      charCountElement.textContent = 250;
+
+      const remaining = 250 - textarea.value.length;
+        charCountElement.textContent = remaining;
+        
+        // change color to red if less than 20 characters left
+        if (remaining < 20) {
+          charCountElement.style.color = 'red';
+        } else {
+          charCountElement.style.color = '';
+        }
+      
+      // update character count on input event
+      textarea.addEventListener('input', () => {
+        const remaining = 250 - textarea.value.length;
+        charCountElement.textContent = remaining;
+        
+        // change color to red if less than 20 characters left
+        if (remaining < 20) {
+          charCountElement.style.color = 'red';
+        } else {
+          charCountElement.style.color = '';
+        }
+      });
+    }, 0);
+  }
+
   const closePopup = () => {
     document.querySelector('.overlay').style.display = 'none';
   }
@@ -163,6 +208,8 @@ function App() {
               <p>{new Date(yap.date).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}</p>
             </div>
             <p>{yap.content}</p>
+            <button className="editYap" onClick={() => editYap(yap.content)}>Edit</button>
+            <button className="deleteYap">Delete</button>
           </div>
         ))}
       </main>
