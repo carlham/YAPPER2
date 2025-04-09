@@ -26,7 +26,7 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-     #Retrieving user form data from db
+     # Retrieving user form data from db
      user = crud.get_user_by_username(db, username=form_data.username)
 
      if not user or not verify_password(form_data.password, user.hashed_password):
@@ -34,7 +34,12 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
      
      access_token = create_access_token(data={"sub": user.username})
      
-     return {"access_token": access_token, "token_type": "bearer"}
+     # Return both the token and user ID, ensuring user.id is an integer
+     return {
+          "access_token": access_token, 
+          "token_type": "bearer",
+          "user_id": int(user.id)
+     }
 
 @router.post("/logout")
 def logout(request: Request):

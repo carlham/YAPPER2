@@ -1,152 +1,254 @@
-import searchIcon from './searchIcon.png';
-import './App.css';
-import React from 'react';
+import searchIcon from "./searchIcon.png";
+import "./App.css";
+import React from "react";
 
 function App() {
+  const [tweets, setTweets] = React.useState([]);
+
+  const fetchTweets = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/tweets", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setTweets(data);
+      }
+    } catch (error) {
+      console.error("Error fetching tweets: ", error);
+    }
+  };
+
   React.useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token && window.location.pathname !== "/login" && window.location.pathname !== "/register") {
+    if (localStorage.getItem("token")) {
+      fetchTweets();
+    }
+  }, []);
+
+  React.useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (
+      !token &&
+      window.location.pathname !== "/login" &&
+      window.location.pathname !== "/register"
+    ) {
       window.location.href = "/login";
     }
-  }, [])
-
-  // dummy data
-  const yapps = [
-    {
-      id: 1,
-      username: 'admin',
-      date: '2025-03-19T12:58:00',
-      content: 'just setting up my yappr'
-    },
-    {
-      id: 2,
-      username: 'guy',
-      date: '2025-03-19T11:25:00',
-      content: 'hey there, this is my first yap, i hope to use this service a lot you know, I love how simple it is and stuff, great!'
-    },
-    {
-      id: 3,
-      username: 'another guy',
-      date: '2025-03-26T14:31:00',
-      content: 'Keep yapping, man! -Joe Biden'
-    },
-  ];
+  }, []);
 
   // sorts yapps by date
-  const sortedYapps = yapps.sort((a, b) => new Date(b.date) - new Date(a.date));
+  const sortedYapps = tweets.sort(
+    (a, b) => new Date(b.created_at) - new Date(a.created_at)
+  );
 
   // displays an alert with information about Yapper
   const aboutYapper = () => {
-    document.querySelector('.overlay').style.display = 'flex';
-    document.querySelector('#popupTitle').innerHTML = 'About Yapper';
-    document.querySelector('#popupContent').innerHTML = `
+    document.querySelector(".overlay").style.display = "flex";
+    document.querySelector("#popupTitle").innerHTML = "About Yapper";
+    document.querySelector("#popupContent").innerHTML = `
       <p>Yapper is an improved version of Twitter, with a much more suitable name, because let's be honest, people don't usually post anything of importance, they just yapping! Enjoy this hellhole of peoples thoughts and feelings nobody but themselves care about.</p>
     `;
-  }
+  };
 
   const createYap = () => {
-    document.querySelector('.overlay').style.display = 'flex';
-    document.querySelector('#popupTitle').innerHTML = 'Create Yap';
-    document.querySelector('#popupContent').innerHTML = `
-      <form class="createYapForm">
+    document.querySelector(".overlay").style.display = "flex";
+    document.querySelector("#popupTitle").innerHTML = "Create Yap";
+    document.querySelector("#popupContent").innerHTML = `
+      <form class="createYapForm" id="createYapForm">
         <label for="yapContent">Yap:</label>
         <textarea id="yapContent" name="yapContent" maxlength="250" placeholder="Hey #Yapper ..."></textarea>
         <div class="char-counter"><span id="charCount">250</span> characters left</div>
         <button type="submit">Post</button>
       </form>
     `;
-    
-    // set up the character counter after the popup content is added to the DOM
+
     setTimeout(() => {
-      const textarea = document.getElementById('yapContent');
-      const charCountElement = document.getElementById('charCount');
-      
-      // the default value of the character counter
+      const form = document.getElementById("createYapForm");
+      form.addEventListener("submit", handleCreateYap);
+
+      const textarea = document.getElementById("yapContent");
+      const charCountElement = document.getElementById("charCount");
+
       charCountElement.textContent = 250;
-      
-      // update character count on input event
-      textarea.addEventListener('input', () => {
+
+      textarea.addEventListener("input", () => {
         const remaining = 250 - textarea.value.length;
         charCountElement.textContent = remaining;
-        
-        // change color to red if less than 20 characters left
+
         if (remaining < 20) {
-          charCountElement.style.color = 'red';
+          charCountElement.style.color = "red";
         } else {
-          charCountElement.style.color = '';
+          charCountElement.style.color = "";
         }
       });
     }, 0);
-  }
+  };
 
-  const editYap = (yapContent) => {
-    document.querySelector('.overlay').style.display = 'flex';
-    document.querySelector('#popupTitle').innerHTML = 'Edit Yap';
-    document.querySelector('#popupContent').innerHTML = `
-      <form class="createYapForm">
+  const handleCreateYap = async (e) => {
+    e.preventDefault();
+    const content = document.getElementById("yapContent").value;
+    const userId = parseInt(localStorage.getItem("userId"));
+
+    if (!content.trim()) {
+      alert("Yap content cannot be empty!");
+      return;
+    }
+
+    if (!userId || isNaN(userId)) {
+      alert("User ID is invalid. Please try logging in again.");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:8000/tweets", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          content: content.trim(),
+          owner_id: userId
+        })
+      });
+
+      if (response.ok) {
+        closePopup();
+        fetchTweets();
+      } else {
+        const errorData = await response.json();
+        const errorMessage = typeof errorData.detail === 'string' 
+          ? errorData.detail 
+          : Array.isArray(errorData.detail)
+            ? errorData.detail.map(err => err.msg).join(', ')
+            : JSON.stringify(errorData);
+        alert(`Failed to create yap: ${errorMessage}`);
+      }
+    } catch (error) {
+      console.error("Error creating yap:", error);
+      alert("Failed to create yap: Network error");
+    }
+  };
+
+  const editYap = (yap) => {
+    document.querySelector(".overlay").style.display = "flex";
+    document.querySelector("#popupTitle").innerHTML = "Edit Yap";
+    document.querySelector("#popupContent").innerHTML = `
+      <form class="editYapForm" id="editYapForm">
         <label for="yapContent">Edit Yap:</label>
-        <textarea id="yapContent" name="yapContent" maxlength="250" placeholder="Hey #Yapper ...">${ yapContent }</textarea>
-        <div class="char-counter"><span id="charCount">250</span> characters left</div>
+        <textarea id="yapContent" name="yapContent" maxlength="250">${yap.content}</textarea>
+        <div class="char-counter"><span id="charCount">${250 - yap.content.length}</span> characters left</div>
         <button type="submit">Update Yap</button>
       </form>
     `;
-    
-    // set up the character counter after the popup content is added to the DOM
-    setTimeout(() => {
-      const textarea = document.getElementById('yapContent');
-      const charCountElement = document.getElementById('charCount');
-      
-      // the default value of the character counter
-      charCountElement.textContent = 250;
 
-      const remaining = 250 - textarea.value.length;
-        charCountElement.textContent = remaining;
-        
-        // change color to red if less than 20 characters left
-        if (remaining < 20) {
-          charCountElement.style.color = 'red';
-        } else {
-          charCountElement.style.color = '';
-        }
-      
-      // update character count on input event
-      textarea.addEventListener('input', () => {
+    setTimeout(() => {
+      const form = document.getElementById("editYapForm");
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const content = document.getElementById("yapContent").value;
+        handleEditYap(yap.id, content);
+      });
+
+      const textarea = document.getElementById("yapContent");
+      const charCountElement = document.getElementById("charCount");
+
+      // Update character count on input
+      textarea.addEventListener("input", () => {
         const remaining = 250 - textarea.value.length;
         charCountElement.textContent = remaining;
-        
-        // change color to red if less than 20 characters left
+
         if (remaining < 20) {
-          charCountElement.style.color = 'red';
+          charCountElement.style.color = "red";
         } else {
-          charCountElement.style.color = '';
+          charCountElement.style.color = "";
         }
       });
     }, 0);
-  }
+  };
+
+  const handleEditYap = async (id, content) => {
+    try {
+      const response = await fetch(`http://localhost:8000/tweets/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          content,
+          owner_id: parseInt(localStorage.getItem("userId"))
+        })
+      });
+
+      if (response.ok) {
+        closePopup();
+        fetchTweets();
+      } else {
+        alert('Failed to update yap');
+      }
+    } catch (error) {
+      console.error('Error updating yap:', error);
+      alert('Failed to update yap');
+    }
+  };
+
+  const deleteYap = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this yap?')) {
+      return;
+    }
+  
+    try {
+      const response = await fetch(`http://localhost:8000/tweets/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+  
+      if (response.ok) {
+        fetchTweets(); // Refresh the tweets list
+      } else {
+        alert('Failed to delete yap');
+      }
+    } catch (error) {
+      console.error('Error deleting yap:', error);
+      alert('Failed to delete yap');
+    }
+  };
 
   const closePopup = () => {
-    document.querySelector('.overlay').style.display = 'none';
-  }
+    document.querySelector(".overlay").style.display = "none";
+  };
 
-  if(window.location.pathname === '/login') {
-    const handleLogin = async (e) =>{
+  if (window.location.pathname === "/login") {
+    const handleLogin = async (e) => {
       e.preventDefault();
-      const username = document.getElementById('loginUsername').value;
-      const password = document.getElementById('loginPassword').value;
+      const username = document.getElementById("loginUsername").value;
+      const password = document.getElementById("loginPassword").value;
       try {
         const formData = new FormData();
-        formData.append('username', username);
-        formData.append('password', password);
-        const response = await fetch('http://localhost:8000/auth/login', {
-          method: 'POST',
+        formData.append("username", username);
+        formData.append("password", password);
+        const response = await fetch("http://localhost:8000/auth/login", {
+          method: "POST",
           body: formData,
         });
         if (response.ok) {
           const data = await response.json();
-          localStorage.setItem('token', data.access_token);
-          window.location.href = '/';
+          console.log('Login response:', data); // Debug log
+          if (!data.user_id) {
+            alert("Server did not return user ID");
+            return;
+          }
+          localStorage.setItem("token", data.access_token);
+          localStorage.setItem("userId", data.user_id.toString()); // Ensure it's stored as string
+          window.location.href = "/";
         } else {
-          alert("Invalid credentials!")
+          const errorData = await response.json();
+          alert(`Login failed: ${errorData.detail || 'Invalid credentials'}`);
         }
       } catch (error) {
         console.error("Login error: ", error);
@@ -163,37 +265,51 @@ function App() {
           <form className="loginForm" onSubmit={handleLogin}>
             <div>
               <label for="loginUsername">Username:</label>
-              <input type="text" id="loginUsername" name="loginUsername" required/>
+              <input
+                type="text"
+                id="loginUsername"
+                name="loginUsername"
+                required
+              />
               <label for="loginPassword">Password:</label>
-              <input type="password" id="loginPassword" name="loginPassword" required/>
+              <input
+                type="password"
+                id="loginPassword"
+                name="loginPassword"
+                required
+              />
               <button type="submit">Login</button>
             </div>
           </form>
-          <p className="logregText">Don't have an account? <a href="/register">Register</a></p>
+          <p className="logregText">
+            Don't have an account? <a href="/register">Register</a>
+          </p>
         </main>
       </div>
     );
   }
-  if(window.location.pathname === '/register') {
+  if (window.location.pathname === "/register") {
     const handleRegister = async (e) => {
       e.preventDefault();
-      const username = document.getElementById('registerUsername').value;
-      const password = document.getElementById('registerPassword').value;
-      const passwordRepeat = document.getElementById('registerPasswordRepeat').value;
+      const username = document.getElementById("registerUsername").value;
+      const password = document.getElementById("registerPassword").value;
+      const passwordRepeat = document.getElementById(
+        "registerPasswordRepeat"
+      ).value;
       if (password !== passwordRepeat) {
         alert("Passwords do not match!");
         return;
       }
       try {
-        const response = await fetch('http://localhost:8000/users', {
-          method: 'POST',
+        const response = await fetch("http://localhost:8000/users", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({ username, password }),
         });
         if (response.ok) {
-          window.location.href = '/login';
+          window.location.href = "/login";
         } else {
           alert("Registration failed!");
         }
@@ -201,7 +317,7 @@ function App() {
         console.error("Registration error: ", error);
         alert("Registration Failed, Server Error");
       }
-    }
+    };
     return (
       <div className="App">
         <header>
@@ -212,15 +328,29 @@ function App() {
           <form className="registerForm" onSubmit={handleRegister}>
             <div>
               <label for="registerUsername">Username:</label>
-              <input type="text" id="registerUsername" name="registerUsername" />
+              <input
+                type="text"
+                id="registerUsername"
+                name="registerUsername"
+              />
               <label for="registerPassword">Password:</label>
-              <input type="password" id="registerPassword" name="registerPassword" />
+              <input
+                type="password"
+                id="registerPassword"
+                name="registerPassword"
+              />
               <label for="registerPasswordRepeat">Repeat password:</label>
-              <input type="password" id="registerPasswordRepeat" name="registerPasswordRepeat" />
+              <input
+                type="password"
+                id="registerPasswordRepeat"
+                name="registerPasswordRepeat"
+              />
               <button type="submit">Register</button>
             </div>
           </form>
-          <p className="logregText">Already have an account? <a href="/login">Login</a></p>
+          <p className="logregText">
+            Already have an account? <a href="/login">Login</a>
+          </p>
         </main>
       </div>
     );
@@ -228,7 +358,7 @@ function App() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    window.location.href = "/login"
+    window.location.href = "/login";
   };
 
   if (localStorage.getItem("token")) {
@@ -239,47 +369,78 @@ function App() {
           <div className="popup">
             <div className="popupHeader">
               <h2 id="popupTitle"></h2>
-              <button className="closePopup" title="Close" onClick={closePopup}>X</button>
+              <button className="closePopup" title="Close" onClick={closePopup}>
+                X
+              </button>
             </div>
             <div id="popupContent"></div>
           </div>
         </div>
         <header>
-         <h1>Yapper</h1>
-         <div className="header-buttons">
-          <button className="infoBtn" title="About Yapper" onClick={aboutYapper}>?</button>
-          <button className="logoutBtn" title="Logout" onClick={handleLogout}>X</button>
-         </div>
+          <h1>Yapper</h1>
+          <div className="header-buttons">
+            <button
+              className="infoBtn"
+              title="About Yapper"
+              onClick={aboutYapper}
+            >
+              ?
+            </button>
+            <button className="logoutBtn" title="Logout" onClick={handleLogout}>
+              X
+            </button>
+          </div>
         </header>
         <div className="action-area">
-          <button className="createYap" onClick={createYap}>Create Yap</button>
+          <button className="createYap" onClick={createYap}>
+            Create Yap
+          </button>
           <div>
             <input type="text" placeholder="Search Yapper..." />
-            <button className="searchBtn" title="Search"><img src={searchIcon} alt="search icon" /></button>
+            <button className="searchBtn" title="Search">
+              <img src={searchIcon} alt="search icon" />
+            </button>
           </div>
         </div>
         <nav>
-          <a href="/" className="pageSelected">Home</a>
+          <a href="/" className="pageSelected">
+            Home
+          </a>
         </nav>
         <main>
           {/* displays each yap in the object array */}
-          { sortedYapps.map(yap => (
+          {sortedYapps.map((yap) => (
             <div key={yap.id} className="yap">
               <div className="yap-header">
-                <h2>@{yap.username}</h2>
-                {/* changes time from ISO to local (in this case, norwegian) format */}
-                <p>{new Date(yap.date).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}</p>
+                <h2>@{yap.owner?.username || "unknown"}</h2>
+                <p>
+                  {new Date(yap.created_at).toLocaleString("en-GB", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                  })}
+                </p>
               </div>
               <p>{yap.content}</p>
-              <button className="editYap" onClick={() => editYap(yap.content)}>Edit</button>
-              <button className="deleteYap">Delete</button>
+              {yap.owner_id === parseInt(localStorage.getItem("userId")) && (
+                <>
+                  <button className="editYap" onClick={() => editYap(yap)}>
+                    Edit
+                  </button>
+                  <button className="deleteYap" onClick={() => deleteYap(yap.id)}>
+                    Delete
+                  </button>
+                </>
+              )}
             </div>
           ))}
         </main>
       </div>
     );
   }
-  }
-  
+}
 
 export default App;
