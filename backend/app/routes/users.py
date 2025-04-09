@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 from sqlalchemy.orm import Session
 from database import get_db
 from models import UserModel
 from schemas import UserCreate, UserResponse
-import hashlib
+from config import SECRET_KEY, ALGORITHM 
+from utils import get_password_hash
 
 router = APIRouter(
     prefix="/users",
@@ -32,17 +33,25 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
 
 @router.post("", response_model=UserResponse)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    hashed_passowrd = hashlib.sha256(user.password.encode()).hexdigest()
+    # check if user exists
+    existing_user = db.query(UserModel).filter(UserModel.username == user.username).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username already registered")
+    
+    # hash password with same function used in auth
+    hashed_password = get_password_hash(user.password)
 
-    user = UserModel(
+    # create new user
+    db_user = UserModel(
         username=user.username,
-        hashed_password=hashed_passowrd,
+        hashed_password=hashed_password
     )
 
-    db.add(user)
+    db.add(db_user)
     db.commit()
-    db.refresh(user)
-    return user
+    db.refresh(db_user)
+
+    return db_user
 
 @router.delete("/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db)):
@@ -50,13 +59,3 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     db.delete(user)
     db.commit()
     return {"message": "User deleted successfully"}
-
-# login and logout routes
-@router.post("/login")
-def login():
-    return {"message": "login successful"}
-
-@router.post("/logout")
-def logout():
-    return {"message": "logout successful"}
-
