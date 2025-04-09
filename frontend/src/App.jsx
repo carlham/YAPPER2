@@ -136,7 +136,7 @@ function App() {
     document.querySelector(".overlay").style.display = "flex";
     document.querySelector("#popupTitle").innerHTML = "Edit Yap";
     document.querySelector("#popupContent").innerHTML = `
-      <form class="editYapForm" id="editYapForm">
+      <form class="createYapForm" id="editYapForm">
         <label for="yapContent">Edit Yap:</label>
         <textarea id="yapContent" name="yapContent" maxlength="250">${yap.content}</textarea>
         <div class="char-counter"><span id="charCount">${250 - yap.content.length}</span> characters left</div>
