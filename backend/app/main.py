@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends
 import uvicorn
 from database import engine, Base
-from routes import users, tweets
+from routes import users, tweets, auth
 from middleware import RateLimitMiddleware
 
 Base.metadata.create_all(bind=engine)
@@ -14,6 +14,7 @@ app.add_middleware(RateLimitMiddleware)
 # include users router
 app.include_router(users.router)
 app.include_router(tweets.router)
+app.include_router(auth.router)
 
 @app.get("/")
 def read_root():
