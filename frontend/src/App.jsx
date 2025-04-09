@@ -77,6 +77,30 @@ function App() {
   }
 
   if(window.location.pathname === '/login') {
+    const handleLogin = async (e) =>{
+      e.preventDefault();
+      const username = document.getElementById('loginUsername').value;
+      const password = document.getElementById('loginPassword').value;
+      try {
+        const formData = new FormData();
+        formData.append('username', username);
+        formData.append('password', password);
+        const response = await fetch('http://localhost:8000/login', {
+          method: 'POST',
+          body: formData,
+        });
+        if (response.ok) {
+          const data = await response.json();
+          localStorage.setItem('token', data.access_token);
+          window.location.href = '/';
+        } else {
+          alert("Invalid credentials!")
+        }
+      } catch (error) {
+        console.error("Login error: ", error);
+        alert("Login Failed, Server Error");
+      }
+    };
     return (
       <div className="App">
         <header>
@@ -84,12 +108,12 @@ function App() {
         </header>
         <main>
           <h2 className="authTitle">Login to Yapper</h2>
-          <form className="loginForm">
+          <form className="loginForm" onSubmit={handleLogin}>
             <div>
               <label for="loginUsername">Username:</label>
-              <input type="text" id="loginUsername" name="loginUsername" />
+              <input type="text" id="loginUsername" name="loginUsername" required/>
               <label for="loginPassword">Password:</label>
-              <input type="password" id="loginPassword" name="loginPassword" />
+              <input type="password" id="loginPassword" name="loginPassword" required/>
               <button type="submit">Login</button>
             </div>
           </form>
@@ -99,6 +123,33 @@ function App() {
     );
   }
   if(window.location.pathname === '/register') {
+    const handleRegister = async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('registerUsername').value;
+      const password = document.getElementById('registerPassword').value;
+      const passwordRepeat = document.getElementById('registerPasswordRepeat').value;
+      if (password !== passwordRepeat) {
+        alert("Passwords do not match!");
+        return;
+      }
+      try {
+        const response = await fetch('http://localhost:8000/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password }),
+        });
+        if (response.ok) {
+          window.location.href = '/login';
+        } else {
+          alert("Registration failed!");
+        }
+      } catch (error) {
+        console.error("Registration error: ", error);
+        alert("Registration Failed, Server Error");
+      }
+    }
     return (
       <div className="App">
         <header>
@@ -106,7 +157,7 @@ function App() {
         </header>
         <main>
           <h2 className="authTitle">Register a Yapper account</h2>
-          <form className="registerForm">
+          <form className="registerForm" onSubmit={handleRegister}>
             <div>
               <label for="registerUsername">Username:</label>
               <input type="text" id="registerUsername" name="registerUsername" />
