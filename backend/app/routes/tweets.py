@@ -104,9 +104,18 @@ def update_tweet(tweet_id: int, tweet_data: TweetCreate, db: Session = Depends(g
     return {"message": "Tweet updated successfully"}
 
 @router.delete("/{tweet_id}")
-def delete_tweet(tweet_id: int, db: Session = Depends(get_db)):
-    tweet = db.query(TweetsModel).filter(TweetsModel.id == tweet_id).first()
-    db.delete(tweet)
+def delete_tweet(tweet_id: int, db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
+    # check if tweet exists
+    db_tweet = db.query(TweetsModel).filter(TweetsModel.id == tweet_id).first()
+    if not db_tweet:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tweet not found")
+    # auth check, only owner can delete own tweets
+    if db_tweet.owner_id != current_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Not authorized to delete this tweet")
+    # delete tweet from db
+    db.delete(db_tweet)
     db.commit()
     return {"message": "Tweet deleted successfully"}
 

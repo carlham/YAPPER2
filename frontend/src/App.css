@@ -277,6 +277,15 @@ main:has(form) {
   font-weight: bold;
 }
 
+.deleteYap {
+  background-color: red;
+  color: white;
+}
+
+.editYap {
+  background-color: #00BFFF;
+}
+
 /* Windows 98 Scrollbar with some modification, from: https://gist.github.com/Dakedres/0ccda599648833a1c2f65d3967aa131b */
 
 body *::-webkit-scrollbar {
