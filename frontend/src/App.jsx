@@ -271,6 +271,8 @@ function App() {
                 <p>{new Date(yap.date).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}</p>
               </div>
               <p>{yap.content}</p>
+              <button className="editYap" onClick={() => editYap(yap.content)}>Edit</button>
+              <button className="deleteYap">Delete</button>
             </div>
           ))}
         </main>
