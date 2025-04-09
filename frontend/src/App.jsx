@@ -1,7 +1,14 @@
 import searchIcon from './searchIcon.png';
 import './App.css';
+import React from 'react';
 
 function App() {
+  React.useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token && window.location.pathname !== "/login" && window.location.pathname !== "/register") {
+      window.location.href = "/login";
+    }
+  }, [])
 
   // dummy data
   const yapps = [
@@ -85,7 +92,7 @@ function App() {
         const formData = new FormData();
         formData.append('username', username);
         formData.append('password', password);
-        const response = await fetch('http://localhost:8000/login', {
+        const response = await fetch('http://localhost:8000/auth/login', {
           method: 'POST',
           body: formData,
         });
@@ -133,7 +140,7 @@ function App() {
         return;
       }
       try {
-        const response = await fetch('http://localhost:8000/register', {
+        const response = await fetch('http://localhost:8000/users', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -174,51 +181,58 @@ function App() {
     );
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    window.location.href = "/login"
+  };
 
-  return (
-    <div className="App">
-      <div className="overlay">
-        <div className="overlayCloser" onClick={closePopup}></div>
-        <div className="popup">
-          <div className="popupHeader">
-            <h2 id="popupTitle"></h2>
-            <button className="closePopup" title="Close" onClick={closePopup}>X</button>
-          </div>
-          <div id="popupContent"></div>
-        </div>
-      </div>
-      <header>
-       <h1>Yapper</h1>
-       <div className="header-buttons">
-        <button className="infoBtn" title="About Yapper" onClick={aboutYapper}>?</button>
-        <button className="logoutBtn" title="Logout">X</button>
-       </div>
-      </header>
-      <div className="action-area">
-        <button className="createYap" onClick={createYap}>Create Yap</button>
-        <div>
-          <input type="text" placeholder="Search Yapper..." />
-          <button className="searchBtn" title="Search"><img src={searchIcon} alt="search icon" /></button>
-        </div>
-      </div>
-      <nav>
-        <a href="/" className="pageSelected">Home</a>
-      </nav>
-      <main>
-        {/* displays each yap in the object array */}
-        { sortedYapps.map(yap => (
-          <div key={yap.id} className="yap">
-            <div className="yap-header">
-              <h2>@{yap.username}</h2>
-              {/* changes time from ISO to local (in this case, norwegian) format */}
-              <p>{new Date(yap.date).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}</p>
+  if (localStorage.getItem("token")) {
+    return (
+      <div className="App">
+        <div className="overlay">
+          <div className="overlayCloser" onClick={closePopup}></div>
+          <div className="popup">
+            <div className="popupHeader">
+              <h2 id="popupTitle"></h2>
+              <button className="closePopup" title="Close" onClick={closePopup}>X</button>
             </div>
-            <p>{yap.content}</p>
+            <div id="popupContent"></div>
           </div>
-        ))}
-      </main>
-    </div>
-  );
-}
+        </div>
+        <header>
+         <h1>Yapper</h1>
+         <div className="header-buttons">
+          <button className="infoBtn" title="About Yapper" onClick={aboutYapper}>?</button>
+          <button className="logoutBtn" title="Logout" onClick={handleLogout}>X</button>
+         </div>
+        </header>
+        <div className="action-area">
+          <button className="createYap" onClick={createYap}>Create Yap</button>
+          <div>
+            <input type="text" placeholder="Search Yapper..." />
+            <button className="searchBtn" title="Search"><img src={searchIcon} alt="search icon" /></button>
+          </div>
+        </div>
+        <nav>
+          <a href="/" className="pageSelected">Home</a>
+        </nav>
+        <main>
+          {/* displays each yap in the object array */}
+          { sortedYapps.map(yap => (
+            <div key={yap.id} className="yap">
+              <div className="yap-header">
+                <h2>@{yap.username}</h2>
+                {/* changes time from ISO to local (in this case, norwegian) format */}
+                <p>{new Date(yap.date).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}</p>
+              </div>
+              <p>{yap.content}</p>
+            </div>
+          ))}
+        </main>
+      </div>
+    );
+  }
+  }
+  
 
 export default App;
