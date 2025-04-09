@@ -14,8 +14,10 @@ router = APIRouter(
 
 # endpoints for tweets, get all tweets, create tweet, edit tweet and delete tweet 
 @router.get("", response_model=List[TweetResponse])
-def read_tweets(db: Session = Depends(get_db)):
-    tweets = db.query(TweetsModel).all()
+def read_tweets(db: Session = Depends(get_db), skip: int = None, limit: int = None): # pagination if wanted
+    tweets = db.query(TweetsModel).offset(skip).limit(limit).all()
+    if not tweets:
+        return {"error": "No tweets found"}
     return tweets
 
 # searching for tweets

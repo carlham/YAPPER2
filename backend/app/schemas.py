@@ -35,7 +35,7 @@ class TweetBase(BaseModel):
 
 #Tweet creation schema, it inherits from tweetbase and doesnt need additional fields
 class TweetCreate(TweetBase):
-    content: str = Field(..., min_length=1, max_length=250) # forgot what we have on frontend, need to update later
+    content: str = Field(..., min_length=1, max_length=250) 
     owner_id: Optional[int] = None
     
     @field_validator('content')
