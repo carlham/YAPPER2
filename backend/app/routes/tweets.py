@@ -16,8 +16,6 @@ router = APIRouter(
 @router.get("", response_model=List[TweetResponse])
 def read_tweets(db: Session = Depends(get_db), skip: int = None, limit: int = None): # pagination if wanted
     tweets = db.query(TweetsModel).offset(skip).limit(limit).all()
-    if not tweets:
-        return {"error": "No tweets found"}
     return tweets
 
 # searching for tweets
