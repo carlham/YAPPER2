@@ -4,6 +4,7 @@ from starlette.responses import Response
 import time
 from collections import defaultdict
 
+# Rate limiting middleware to limit the number of requests from a client withing specified time window
 class RateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, max_requests: int = 10, window_seconds: int = 60):
         super().__init__(app)
@@ -15,7 +16,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Get client IP as identifier
         client_id = request.client.host
         
-        # Only rate limit POST/PUT requests to tweets
+        # Only rate limit POST/PUT/DELETE requests to tweets
         if request.url.path.startswith("/tweets") and request.method in ["POST", "PUT", "DELETE"]:
             current_time = time.time()
             

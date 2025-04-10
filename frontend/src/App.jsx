@@ -3,7 +3,8 @@ import "./App.css";
 import React from "react";
 
 function App() {
-  const [tweets, setTweets] = React.useState([]);
+    const [searchQuery, setSearchQuery] = React.useState("");
+    const [tweets, setTweets] = React.useState([]);
 
   const fetchTweets = async () => {
     try {
@@ -193,6 +194,42 @@ function App() {
       console.error('Error updating yap:', error);
       alert('Failed to update yap');
     }
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    try {
+      let endpoint = "http://localhost:8000/tweets/search";
+      const params = new URLSearchParams();
+
+      //determine search type by prefix for tags
+      if (searchQuery.startsWith("#")) {
+        endpoint = "http://localhost:8000/tweets/search/tags";
+        params.append("tag", searchQuery.substring(1));
+      } else if (searchQuery.startsWith("@")) { //search for user by @username
+        endpoint = "http://localhost:8000/users/search/";
+        params.append("query", searchQuery.substring(1));
+      } else {
+        //regular tweet search
+        params.append("query", searchQuery);
+      }
+      
+      const response = await fetch(`${endpoint}?${params}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTweets(data);
+        console.log(data);
+      };
+
+    } catch (error) {
+      console.error("Error searching tweets: ", error);
+      
+    };
   };
 
   const deleteYap = async (id) => {
@@ -396,8 +433,14 @@ function App() {
             Create Yap
           </button>
           <div>
-            <input type="text" placeholder="Search Yapper..." />
-            <button className="searchBtn" title="Search">
+            <input 
+              type="text" 
+              placeholder="Search #tags or tweets..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}            
+            />
+            <button className="searchBtn" title="Search" onClick={handleSearch}>
               <img src={searchIcon} alt="search icon" />
             </button>
           </div>

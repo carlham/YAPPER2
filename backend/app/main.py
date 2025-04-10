@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 import uvicorn
 from database import engine, Base
 from routes import users, tweets, auth

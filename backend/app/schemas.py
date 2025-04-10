@@ -38,6 +38,7 @@ class TweetCreate(TweetBase):
     content: str = Field(..., min_length=1, max_length=250) 
     owner_id: Optional[int] = None
     
+    # Validator to ensure content is not empty
     @field_validator('content')
     def content_not_empty(cls, v):
         if not v.strip():

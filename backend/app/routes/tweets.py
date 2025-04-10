@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from database import get_db
 from models import TweetsModel, UserModel
 from schemas import TweetCreate, TweetResponse
@@ -16,8 +17,8 @@ router = APIRouter(
 @router.get("", response_model=List[TweetResponse])
 def read_tweets(db: Session = Depends(get_db), skip: int = None, limit: int = None): # pagination if wanted
     tweets_db = db.query(TweetsModel, UserModel.username.label("username"))\
-    .join(UserModel, TweetsModel.owner_id == UserModel.id)\
-    .offset(skip).limit(limit).all()
+        .join(UserModel, TweetsModel.owner_id == UserModel.id)\
+        .offset(skip).limit(limit).all()
     tweets = []
     for tweet, username in tweets_db: 
         tweet_dict = {
@@ -32,19 +33,55 @@ def read_tweets(db: Session = Depends(get_db), skip: int = None, limit: int = No
     return tweets
 
 # searching for tweets
-@router.get("/search")
+@router.get("/search", response_model=List[TweetResponse])
 def search_tweets(query: str, db: Session = Depends(get_db)):
-    tweets = db.query(TweetsModel).filter(TweetsModel.content.ilike(f"%{query}%")).all()
+    tweets_db = db.query(TweetsModel, UserModel.username.label("username"))\
+        .join(UserModel, TweetsModel.owner_id == UserModel.id)\
+        .filter(TweetsModel.content.ilike(f"%{query}%")).all()
+    
+    # format like in GET tweets
+    tweets = []
+    for tweet, username in tweets_db:
+        tweet_dict = {
+            "id": tweet.id,
+            "content": tweet.content,
+            "owner_id": tweet.owner_id,
+            "created_at": tweet.created_at,
+            "tags": tweet.tags,
+            "username": username
+        }
+        tweets.append(tweet_dict)
     return tweets
 
 # searching for tags
 @router.get("/search/tags")
 def search_tweets_by_tags(tag: str, db: Session = Depends(get_db)):
-    tweets = db.query(TweetsModel).filter(TweetsModel.tags.ilike(f"%{tag}%")).all()
+    search_tag = tag if tag.startswith("#") else f"#{tag}"
+    tweets_db = db.query(TweetsModel, UserModel.username.label("username"))\
+        .join(UserModel, TweetsModel.owner_id == UserModel.id)\
+        .filter(
+            or_(
+                TweetsModel.tags.ilike(f"%{search_tag}%") , 
+                TweetsModel.tags == search_tag , #exact match 
+                TweetsModel.content.ilike(f"%{search_tag}%") #content match
+            )
+        ).all()
+    # format like in GET tweets
+    tweets = []
+    for tweet, username in tweets_db:
+        tweet_dict = {
+            "id": tweet.id,
+            "content": tweet.content,
+            "owner_id": tweet.owner_id,
+            "created_at": tweet.created_at,
+            "tags": tweet.tags,
+            "username": username
+        }
+        tweets.append(tweet_dict)
     return tweets
 
 # get all tweets by user id
-# unsure if we need this, but it might be useful for the frontend down the line
+# not used
 @router.get("/user/{user_id}", response_model=List[TweetResponse])
 def read_tweets_by_user(user_id: int, db: Session = Depends(get_db)):
     tweets = db.query(TweetsModel).filter(TweetsModel.owner_id == user_id).all()
@@ -60,6 +97,7 @@ def read_tweet(tweet_id: int, db: Session = Depends(get_db)):
     if tweet is None:
         return {"error": "Tweet not found"}
     return tweet
+
 
 # modify this to split the tags by hashtag and add them to the tags field
 # when creating a tweet
@@ -116,6 +154,8 @@ def update_tweet(tweet_id: int, tweet_data: TweetCreate, db: Session = Depends(g
     db.refresh(db_tweet)
     return {"message": "Tweet updated successfully"}
 
+
+# delete a tweet
 @router.delete("/{tweet_id}")
 def delete_tweet(tweet_id: int, db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
     # check if tweet exists
