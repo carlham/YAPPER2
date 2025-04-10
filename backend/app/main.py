@@ -11,16 +11,18 @@ Base.metadata.create_all(bind=engine)
 debug = os.environ.get("DEBUG", "True").lower() == "true"
 app = FastAPI(debug=debug)
 
-origins = ["http://localhost,"
-    "http://localhost:3000,"
-    "http://localhost:8000,"
-    "https://yapper-4qux.onrender.com,"
-    "https://yapper-zwai.onrender.com"]
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "https://yapper-4qux.onrender.com",
+    "https://yapper-zwai.onrender.com"
+    ]
 
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
