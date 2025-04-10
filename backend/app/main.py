@@ -11,7 +11,11 @@ Base.metadata.create_all(bind=engine)
 debug = os.environ.get("DEBUG", "True").lower() == "true"
 app = FastAPI(debug=debug)
 
-origins = os.environ.get("ALLOWED_ORIGINS", "http://localhost,http://localhost:3000,http://localhost:8000,https://yapper-4qux.onrender.com,/https://yapper-zwai.onrender.com/login,https://yapper-zwai.onrender.com/").split(",")
+origins = ["http://localhost,"
+    "http://localhost:3000,"
+    "http://localhost:8000,"
+    "https://yapper-4qux.onrender.com,"
+    "https://yapper-zwai.onrender.com"]
 
 
 app.add_middleware(
