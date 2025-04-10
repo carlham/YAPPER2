@@ -63,6 +63,7 @@ class TweetResponse(BaseModel):
     owner_id: int
     tags: Optional[str] = None
     created_at: datetime
+    username: Optional[str] = None
     
 
     class Config:
