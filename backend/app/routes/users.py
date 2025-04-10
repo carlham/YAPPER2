@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import UserModel
 from schemas import UserCreate, UserResponse
-from config import SECRET_KEY, ALGORITHM 
 from utils import get_password_hash
 
 router = APIRouter(
@@ -31,6 +30,7 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
         return {"error": "User not found"}
     return user
 
+#create account
 @router.post("", response_model=UserResponse)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
     # check if user exists
@@ -53,6 +53,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
 
     return db_user
 
+#not used
 @router.delete("/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(UserModel).filter(UserModel.id == user_id).first()

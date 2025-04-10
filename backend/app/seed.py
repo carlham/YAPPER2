@@ -5,7 +5,8 @@ import random
 from datetime import datetime, timedelta
 import hashlib
 
-# script used while developing, seeds database with data 
+# script used while developing
+# seeds the database with dummy data to have something to display, if you want to be able to use the page, make a own account
 
 # Sample data
 usernames = [
@@ -16,26 +17,17 @@ usernames = [
 
 tweet_contents = [
     "Just finished a great coding session! #programming",
-    "The weather is perfect today for a walk in the park.",
-    "Can't believe how fast this year is going by!",
     "Working on a new project, super excited about it! #coding",
     "Learning FastAPI and it's amazing! #webdev #python",
-    "Coffee is definitely the fuel that keeps me going.",
-    "Sometimes the simplest solution is the best one.",
     "Don't forget to take breaks when coding! #healthtips",
     "PostgreSQL is my favorite database system. #database",
     "Reading a fascinating book about AI. #artificialintelligence",
     "Just deployed my app to production! #deployment",
-    "Debugging is like being a detective in a crime story.",
+    "Debugging is like being a detective in a crime story. #crime",
     "Remember to commit your code frequently! #git",
     "Python makes life so much easier. #pythonlove",
-    "RESTful APIs are the backbone of modern web applications.",
-]
-
-tags = [
-    "coding", "programming", "python", "webdev", "learning",
-    "technology", "database", "fastapi", "sqlalchemy", "api",
-    "development", "software", "backend", "postgres", "rest"
+    "RESTful APIs are the backbone of modern web applications. #restapi",
+    "This yap doesn't contain a hashtag!"
 ]
 
 def get_hash_password(plain_password):
@@ -75,20 +67,10 @@ def seed_data():
                 # Select random content
                 content = random.choice(tweet_contents)
                 
-                # 70% chance to have tags
-                has_tags = random.random() < 0.7
-                tweet_tags = None
-                if has_tags:
-                    # Select 1-3 random tags
-                    num_tags = random.randint(1, 3)
-                    selected_tags = random.sample(tags, num_tags)
-                    tweet_tags = " ".join(["#" + tag for tag in selected_tags])
-                
                 # Create the tweet
                 tweet = TweetsModel(
                     content=content,
                     owner_id=user.id,
-                    tags=tweet_tags,
                     # Let created_at use the default server value
                 )
                 db.add(tweet)
