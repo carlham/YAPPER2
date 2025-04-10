@@ -2,6 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from config import DATABASE_URL
+import os
 
 #Creating SQLAlchemy engine using the config.py URL
 #SQLAlchemy needs it to execute SQL queries and interact with the DB
