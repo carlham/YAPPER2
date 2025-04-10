@@ -199,7 +199,7 @@ function App() {
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     try {
-      let endpoint = "https://yapper-4qux.onrender.com/search";
+      let endpoint = "https://yapper-4qux.onrender.com/tweets/search";
       const params = new URLSearchParams();
 
       //determine search type by prefix for tags
