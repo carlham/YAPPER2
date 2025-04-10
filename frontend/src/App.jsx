@@ -264,14 +264,14 @@ function App() {
           <h2 className="authTitle">Login to Yapper</h2>
           <form className="loginForm" onSubmit={handleLogin}>
             <div>
-              <label for="loginUsername">Username:</label>
+              <label htmlFor="loginUsername">Username:</label>
               <input
                 type="text"
                 id="loginUsername"
                 name="loginUsername"
                 required
               />
-              <label for="loginPassword">Password:</label>
+              <label htmlFor="loginPassword">Password:</label>
               <input
                 type="password"
                 id="loginPassword"
@@ -327,19 +327,19 @@ function App() {
           <h2 className="authTitle">Register a Yapper account</h2>
           <form className="registerForm" onSubmit={handleRegister}>
             <div>
-              <label for="registerUsername">Username:</label>
+              <label htmlFor="registerUsername">Username:</label>
               <input
                 type="text"
                 id="registerUsername"
                 name="registerUsername"
               />
-              <label for="registerPassword">Password:</label>
+              <label htmlFor="registerPassword">Password:</label>
               <input
                 type="password"
                 id="registerPassword"
                 name="registerPassword"
               />
-              <label for="registerPasswordRepeat">Repeat password:</label>
+              <label htmlFor="registerPasswordRepeat">Repeat password:</label>
               <input
                 type="password"
                 id="registerPasswordRepeat"
@@ -412,7 +412,7 @@ function App() {
           {sortedYapps.map((yap) => (
             <div key={yap.id} className="yap">
               <div className="yap-header">
-                <h2>@{yap.owner?.username || "unknown"}</h2>
+                <h2>@{yap.username || "unknown"}</h2>
                 <p>
                   {new Date(yap.created_at).toLocaleString("en-GB", {
                     year: "numeric",

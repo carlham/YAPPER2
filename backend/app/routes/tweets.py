@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 from sqlalchemy.orm import Session
 from database import get_db
-from models import TweetsModel
+from models import TweetsModel, UserModel
 from schemas import TweetCreate, TweetResponse
 from utils import get_current_user_id
 import re
@@ -15,7 +15,20 @@ router = APIRouter(
 # endpoints for tweets, get all tweets, create tweet, edit tweet and delete tweet 
 @router.get("", response_model=List[TweetResponse])
 def read_tweets(db: Session = Depends(get_db), skip: int = None, limit: int = None): # pagination if wanted
-    tweets = db.query(TweetsModel).offset(skip).limit(limit).all()
+    tweets_db = db.query(TweetsModel, UserModel.username.label("username"))\
+    .join(UserModel, TweetsModel.owner_id == UserModel.id)\
+    .offset(skip).limit(limit).all()
+    tweets = []
+    for tweet, username in tweets_db: 
+        tweet_dict = {
+            "id": tweet.id,
+            "content": tweet.content,
+            "owner_id": tweet.owner_id,
+            "created_at": tweet.created_at,
+            "tags": tweet.tags,
+            "username": username
+        }
+        tweets.append(tweet_dict)
     return tweets
 
 # searching for tweets
