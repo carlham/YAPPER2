@@ -39,3 +39,24 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Process the request
         response = await call_next(request)
         return response
+
+# Request caching middleware 
+# This middleware will cache GET requests to reduce unnecessary API calls
+class RequestCacheMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app):
+        super().__init__(app)
+        # Initialize the cache dictionary for storing responses
+        # Structure: {request_key: {"response": response_data, "timestamp": timestamp}}
+        self.cache = {}
+        # Cache expiration time in seconds (1 minute)
+        self.cache_expiration = 60
+    
+    async def dispatch(self, request: Request, call_next):
+        # Only cache GET requests
+        if request.method != "GET":
+            # For non-GET requests, just pass through
+            return await call_next(request)
+        
+        # For now, just pass through all requests
+        response = await call_next(request)
+        return response
