@@ -1,0 +1,65 @@
+version: '3.8'
+
+# Unsure if all this is correct, but this is a starting point
+services:
+  # The main backend API
+  backend-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:2345@db/Yapper
+    depends_on:
+      - db
+
+  # The database
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=2345
+      - POSTGRES_DB=Yapper
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # Cache server 1
+  cache1:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.cache
+    ports:
+      - "8001:8000"
+    environment:
+      - API_URL=http://backend-api:8000
+    depends_on:
+      - backend-api
+
+  # Cache server 2
+  cache2:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.cache
+    ports:
+      - "8002:8000"
+    environment:
+      - API_URL=http://backend-api:8000
+    depends_on:
+      - backend-api
+
+  # Nginx load balancer
+  load-balancer:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - cache1
+      - cache2
+
+volumes:
+  postgres_data:

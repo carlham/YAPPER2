@@ -8,7 +8,7 @@ function App() {
 
   const fetchTweets = async () => {
     try {
-      const response = await fetch("https://yapper-4qux.onrender.com/tweets", {
+      const response = await fetch("http://localhost:8000/tweets", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -103,7 +103,7 @@ function App() {
     }
 
     try {
-      const response = await fetch("https://yapper-4qux.onrender.com/tweets", {
+      const response = await fetch("http://localhost:8000/tweets", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -172,7 +172,7 @@ function App() {
 
   const handleEditYap = async (id, content) => {
     try {
-      const response = await fetch(`https://yapper-4qux.onrender.com/tweets/${id}`, {
+      const response = await fetch(`http://localhost:8000/tweets/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -199,15 +199,15 @@ function App() {
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     try {
-      let endpoint = "https://yapper-4qux.onrender.com/tweets/search";
+      let endpoint = "http://localhost:8000/tweets/search";
       const params = new URLSearchParams();
 
       //determine search type by prefix for tags
       if (searchQuery.startsWith("#")) {
-        endpoint = "https://yapper-4qux.onrender.com/tweets/search/tags";
+        endpoint = "http://localhost:8000/tweets/search/tags";
         params.append("tag", searchQuery.substring(1));
       } else if (searchQuery.startsWith("@")) { //search for user by @username
-        endpoint = "https://yapper-4qux.onrender.com/users/search/";
+        endpoint = "http://localhost:8000/users/search/";
         params.append("query", searchQuery.substring(1));
       } else {
         //regular tweet search
@@ -238,7 +238,7 @@ function App() {
     }
   
     try {
-      const response = await fetch(`https://yapper-4qux.onrender.com/tweets/${id}`, {
+      const response = await fetch(`http://localhost:8000/tweets/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -269,7 +269,7 @@ function App() {
         const formData = new FormData();
         formData.append("username", username);
         formData.append("password", password);
-        const response = await fetch("https://yapper-4qux.onrender.com/auth/login", {
+        const response = await fetch("http://localhost:8000/auth/login", {
           method: "POST",
           body: formData,
         });
@@ -338,7 +338,7 @@ function App() {
         return;
       }
       try {
-        const response = await fetch("https://yapper-4qux.onrender.com/users", {
+        const response = await fetch("http://localhost:8000/users", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
