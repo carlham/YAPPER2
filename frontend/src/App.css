@@ -148,12 +148,23 @@ main:has(form) {
   color: white;
 }
 
-.searchBtn {
+.searchBtn, .likeYap img {
   image-rendering: pixelated;
 }
 
 .searchBtn:hover {
   background-color: orange;
+}
+
+.likeYap {
+  font-size: 1rem;
+  background-color: rgb(169, 16, 180);
+  color: white;
+}
+
+.likeYap img {
+  height: .8rem;
+  margin-right: .2rem;
 }
 
 .overlay {

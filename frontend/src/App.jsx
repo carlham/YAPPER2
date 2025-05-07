@@ -1,10 +1,12 @@
 import searchIcon from "./searchIcon.png";
+import like from "./like.png";
 import "./App.css";
 import React from "react";
 
 function App() {
     const [searchQuery, setSearchQuery] = React.useState("");
     const [tweets, setTweets] = React.useState([]);
+    const [likeCounts, setLikeCounts] = React.useState({});
 
   const fetchTweets = async () => {
     try {
@@ -19,6 +21,45 @@ function App() {
       }
     } catch (error) {
       console.error("Error fetching tweets: ", error);
+    }
+  };
+
+  const fetchLikeCount = async (yapId) => {
+    try {
+      const response = await fetch(`http://localhost:8000/likes/${yapId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setLikeCounts(prevCounts => ({
+          ...prevCounts,
+          [yapId]: data.likes
+        }));
+      }
+    } catch (error) {
+      console.error(`Error fetching likes for yap ${yapId}:`, error);
+    }
+  };
+  
+  const handleLike = async (yapId) => {
+    try {
+      const response = await fetch(`http://localhost:8000/likes/${yapId}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        }
+      });
+      
+      if (response.ok) {
+        setLikeCounts(prevCounts => ({
+          ...prevCounts,
+          [yapId]: (prevCounts[yapId] || 0) + 1
+        }));
+      }
+    } catch (error) {
+      console.error(`Error liking yap ${yapId}:`, error);
     }
   };
 
@@ -39,10 +80,20 @@ function App() {
     }
   }, []);
 
+  React.useEffect(() => {
+    if (tweets.length > 0) {
+      tweets.forEach(tweet => {
+        fetchLikeCount(tweet.id);
+      });
+    }
+  }, [tweets]);
+
   // sorts yapps by date
   const sortedYapps = tweets.sort(
     (a, b) => new Date(b.created_at) - new Date(a.created_at)
   );
+
+  
 
   // displays an alert with information about Yapper
   const aboutYapper = () => {
@@ -468,6 +519,10 @@ function App() {
                 </p>
               </div>
               <p>{yap.content}</p>
+              <button className="likeYap" onClick={() => handleLike(yap.id)}>
+                <img src={like} alt="Like" className="likeBtn" />
+                {likeCounts[yap.id] || 0}
+              </button>
               {yap.owner_id === parseInt(localStorage.getItem("userId")) && (
                 <>
                   <button className="editYap" onClick={() => editYap(yap)}>
