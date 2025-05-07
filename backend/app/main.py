@@ -1,10 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 import uvicorn
 from database import engine, Base
 from routes import users, tweets, auth, logs, likes
 from middleware import RateLimitMiddleware, RequestCacheMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 import os
+import time
+from routes.logs import log_api_call
 
 Base.metadata.create_all(bind=engine)
 
@@ -27,6 +29,24 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
+
+# Log middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    # Log the request details
+    start_time = time.time()
+    response = await call_next(request)
+    end_time = time.time()
+    
+    # Log the API call
+    log_api_call(
+        method=request.method,
+        endpoint=request.url.path,
+        status_code=response.status_code,
+        execution_time=end_time - start_time
+    )
+    
+    return response
 
 # add middleware
 app.add_middleware(RateLimitMiddleware)
