@@ -162,6 +162,10 @@ main:has(form) {
   color: white;
 }
 
+.likeYap:hover {
+  background-color: rgb(138, 14, 147);
+}
+
 .likeYap img {
   height: .8rem;
   margin-right: .2rem;
