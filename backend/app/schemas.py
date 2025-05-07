@@ -53,6 +53,7 @@ class Tweet(TweetBase):
     owner_id: int
     created_at: datetime
     tags : Optional[str]
+    likes: Optional[int] = 0
 
     class Config:
         orm_mode = True
