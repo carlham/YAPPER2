@@ -20,5 +20,6 @@ class TweetsModel(Base):
     owner_id = Column(Integer, ForeignKey("users.id")) #Foreignkey is referencing users.id
     created_at = Column(DateTime, server_default=func.now())
     tags = Column(String, nullable=True) #Optional field
+    likes = Column(Integer, default=0) #Number of likes
 
     owner = relationship("UserModel", back_populates="tweets") #Relationship with the "User" model

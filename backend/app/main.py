@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import uvicorn
 from database import engine, Base
-from routes import users, tweets, auth, logs
+from routes import users, tweets, auth, logs, likes
 from middleware import RateLimitMiddleware, RequestCacheMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -37,6 +37,7 @@ app.include_router(users.router)
 app.include_router(tweets.router)
 app.include_router(auth.router)
 app.include_router(logs.router)
+app.include_router(likes.router)
 
 @app.get("/")
 def read_root():
