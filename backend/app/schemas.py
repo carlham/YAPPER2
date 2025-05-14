@@ -16,7 +16,7 @@ class User(UserBase):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class UserResponse(BaseModel):
@@ -25,7 +25,7 @@ class UserResponse(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 #Tweet data schema
@@ -56,7 +56,7 @@ class Tweet(TweetBase):
     likes: Optional[int] = 0
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class TweetResponse(BaseModel):
@@ -69,4 +69,4 @@ class TweetResponse(BaseModel):
     
 
     class Config:
-        orm_mode = True
+        from_attributes = True
