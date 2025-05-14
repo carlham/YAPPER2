@@ -1,0 +1,55 @@
+services:
+  python-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: python-backend
+    restart: unless-stopped
+    depends_on:
+      - postgres-db
+    networks:
+      - app-net
+    ports:
+      - "8000:8000"
+
+  javascript-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: javascript-frontend
+    restart: unless-stopped
+    init: true
+    networks:
+      - app-net
+    ports:
+      - "3000:3000" 
+    depends_on:
+      - python-backend
+
+  postgres-db:
+    image: postgres:latest
+    container_name: postgres-db
+    restart: unless-stopped
+    networks:
+      - app-net
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  app-net:
+    driver: bridge
+
+volumes:
+  pgdata:
+    driver: local

@@ -1,12 +1,20 @@
 from fastapi import FastAPI, Request, Response
 import uvicorn
+import os
+import time
+import sys
+from pathlib import Path
 from database import engine, Base
 from routes import users, tweets, auth, logs, likes
 from middleware import RateLimitMiddleware, RequestCacheMiddleware
-from fastapi.middleware.cors import CORSMiddleware
-import os
-import time
 from routes.logs import log_api_call
+from fastapi.middleware.cors import CORSMiddleware
+
+#Add the parent directory to sys.path to make local imports work
+current_dir = Path(__file__).parent
+if str(current_dir) not in sys.path:
+    sys.path.append(str(current_dir.parent))
+
 
 Base.metadata.create_all(bind=engine)
 
