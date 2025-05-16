@@ -1,0 +1,5 @@
+[
+    { "url": "http://python-backend-1:8000" },
+    { "url": "http://python-backend-2:8000" },
+    { "url": "http://python-backend-3:8000" }
+]

@@ -1,9 +1,30 @@
+version: '3.8'
+
 services:
-  python-backend:
+  nginx-cache:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    container_name: nginx-cache
+    restart: unless-stopped
+    networks:
+      - app-net
+    ports:
+      - "80:80"   # Frontend proxy
+      - "8080:8080" # API cache endpoint
+    depends_on:
+      - python-backend-1
+      - python-backend-2
+      - python-backend-3
+      - javascript-frontend
+    volumes:
+      - nginx-cache:/var/cache/nginx
+
+  python-backend-1:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: python-backend
+    container_name: python-backend-1
     restart: unless-stopped
     depends_on:
       - postgres-db
@@ -11,6 +32,38 @@ services:
       - app-net
     ports:
       - "8000:8000"
+    environment:
+      - PORT=8000
+      
+  python-backend-2:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: python-backend-2
+    restart: unless-stopped
+    depends_on:
+      - postgres-db
+    networks:
+      - app-net
+    ports:
+      - "8001:8000"
+    environment:
+      - PORT=8000
+      
+  python-backend-3:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: python-backend-3
+    restart: unless-stopped
+    depends_on:
+      - postgres-db
+    networks:
+      - app-net
+    ports:
+      - "8002:8000"
+    environment:
+      - PORT=8000
 
   javascript-frontend:
     build:
@@ -24,7 +77,9 @@ services:
     ports:
       - "3000:3000" 
     depends_on:
-      - python-backend
+      - python-backend-1
+      - python-backend-2
+      - python-backend-3
 
   postgres-db:
     image: postgres:latest
@@ -52,4 +107,6 @@ networks:
 
 volumes:
   pgdata:
+    driver: local
+  nginx-cache:
     driver: local

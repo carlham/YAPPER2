@@ -10,7 +10,7 @@ function App() {
 
   const fetchTweets = async () => {
     try {
-      const response = await fetch("http://localhost:8000/tweets", {
+      const response = await fetch("http://localhost:8080/tweets", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -26,7 +26,7 @@ function App() {
 
   const fetchLikeCount = async (yapId) => {
     try {
-      const response = await fetch(`http://localhost:8000/likes/${yapId}`, {
+      const response = await fetch(`http://localhost:8080/likes/${yapId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -45,7 +45,7 @@ function App() {
   
   const handleLike = async (yapId) => {
     try {
-      const response = await fetch(`http://localhost:8000/likes/${yapId}`, {
+      const response = await fetch(`http://localhost:8080/likes/${yapId}`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -154,7 +154,7 @@ function App() {
     }
 
     try {
-      const response = await fetch("http://localhost:8000/tweets", {
+      const response = await fetch("http://localhost:8080/tweets", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -223,7 +223,7 @@ function App() {
 
   const handleEditYap = async (id, content) => {
     try {
-      const response = await fetch(`http://localhost:8000/tweets/${id}`, {
+      const response = await fetch(`http://localhost:8080/tweets/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -250,15 +250,15 @@ function App() {
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     try {
-      let endpoint = "http://localhost:8000/tweets/search";
+      let endpoint = "http://localhost:8080/tweets/search";
       const params = new URLSearchParams();
 
       //determine search type by prefix for tags
       if (searchQuery.startsWith("#")) {
-        endpoint = "http://localhost:8000/tweets/search/tags";
+        endpoint = "http://localhost:8080/tweets/search/tags";
         params.append("tag", searchQuery.substring(1));
       } else if (searchQuery.startsWith("@")) { //search for user by @username
-        endpoint = "http://localhost:8000/users/search/";
+        endpoint = "http://localhost:8080/users/search/";
         params.append("query", searchQuery.substring(1));
       } else {
         //regular tweet search
@@ -289,7 +289,7 @@ function App() {
     }
   
     try {
-      const response = await fetch(`http://localhost:8000/tweets/${id}`, {
+      const response = await fetch(`http://localhost:8080/tweets/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -320,7 +320,7 @@ function App() {
         const formData = new FormData();
         formData.append("username", username);
         formData.append("password", password);
-        const response = await fetch("http://localhost:8000/auth/login", {
+        const response = await fetch("http://localhost:8080/auth/login", {
           method: "POST",
           body: formData,
         });
@@ -389,7 +389,7 @@ function App() {
         return;
       }
       try {
-        const response = await fetch("http://localhost:8000/users", {
+        const response = await fetch("http://localhost:8080/users", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
