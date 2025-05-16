@@ -1,25 +1,42 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, Header
 from itertools import cycle 
 import httpx
 import time
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 import json
 from collections import Counter
+import re
 
 app = FastAPI()
 
-#In-memory cache
-#Structure: {request_key: {"data": response_data, "timestamp": timestamp}}
+# In-memory cache
+# Structure: {request_key: {"data": response_data, "timestamp": timestamp}}
 cache = {}
 
-#Request counter for tracking load balancing
+# Request counter for tracking load balancing
 request_counter = Counter()
 
-#Cache expiration time in seconds (1 minute)
+# Cache expiration time in seconds (1 minute)
 CACHE_EXPIRATION = 60
 
-with open ("servers.json") as f:
+# Maximum cache size (items)
+MAX_CACHE_SIZE = 1000
+
+# Database read endpoints to cache (add more as needed)
+DB_READ_PATHS = [
+    r"^/users$",                  # Get all users
+    r"^/users/\d+$",              # Get user by ID
+    r"^/users/search",            # Search users
+    r"^/tweets$",                 # Get all tweets
+    r"^/tweets/\d+$",             # Get tweet by ID
+    r"^/tweets/search",           # Search tweets
+    
+    r"^/likes/\d+$",              # Get likes for a tweet
+]
+
+with open("servers.json") as f:
     servers = json.load(f)
+
 class LoadBalancer:
     def __init__(self, servers):
         self.servers = servers
@@ -28,45 +45,83 @@ class LoadBalancer:
     def round_robin(self):
         return next(self.pool)
 
-#Implement a cache server
-
 load_balancer = LoadBalancer(servers)
 
+def is_db_read_request(method: str, path: str) -> bool:
+    """Determine if a request is a database read operation we want to cache"""
+    if method != "GET":
+        return False
+    
+    # Check if path matches any of our defined DB read patterns
+    for pattern in DB_READ_PATHS:
+        if re.match(pattern, path):
+            return True
+    
+    return False
 
 def generate_cache_key(request: Request, path: str) -> str:
     """Generate a unique cache key based on the request method, path, and query parameters."""
     query_string = request.url.query.decode() if request.url.query else ""
-    return f"{request.method}:{path}:{query_string}"
+    # Include authorization in the cache key to prevent data leakage across users
+    auth_header = request.headers.get("Authorization", "")
+    # Only use the token part, not the entire header
+    if auth_header.startswith("Bearer "):
+        auth_token = auth_header.split(" ")[1][:10]  # Just use first 10 chars as identifier
+    else:
+        auth_token = "noauth"
+        
+    return f"{request.method}:{path}:{query_string}:{auth_token}"
+
+def maintain_cache_size():
+    """Remove oldest items if cache exceeds maximum size"""
+    if len(cache) > MAX_CACHE_SIZE:
+        # Get the keys sorted by timestamp (oldest first)
+        sorted_keys = sorted(cache.keys(), key=lambda k: cache[k]["timestamp"])
+        # Remove oldest entries to get back to 75% of max size
+        to_remove = len(cache) - int(MAX_CACHE_SIZE * 0.75)
+        for _ in range(to_remove):
+            if sorted_keys:
+                del cache[sorted_keys.pop(0)]
 
 @app.get("/{path:path}")
 async def proxy(request: Request, path: str, response: Response):
-    #Generate a cache key for this request
+    # Check if this is a cacheable database read request
+    is_db_read = is_db_read_request(request.method, path)
+    
+    # Generate a cache key for this request
     cache_key = generate_cache_key(request, path)
     
-    #Check if we have a valid cached response
+    # Check if we have a valid cached response for db reads
     current_time = time.time()
-    if request.method == "GET" and cache_key in cache:
+    cache_status = "MISS"
+    
+    if is_db_read and cache_key in cache:
         cached_data = cache[cache_key]
         if current_time - cached_data["timestamp"] < CACHE_EXPIRATION:
             print(f"Cache hit for {path}")
+            cache_status = "HIT"
+            # Set cache status header
+            response.headers["X-Cache-Status"] = cache_status
             return cached_data["data"]
         else:
-            #Cache expired, remove it
+            # Cache expired, remove it
             print(f"Cache expired for {path}")
+            cache_status = "EXPIRED"
             del cache[cache_key]
     
-    #Get the next server from the load balancer
+    # Get the next server from the load balancer
     backend_url = load_balancer.round_robin()
     url = f"{backend_url}/{path}"
     request_counter[backend_url] += 1
     
-    #Print detailed request and balance information
+    # Print detailed request and balance information
     print(f"Forwarding request to: {url} for {request.method} {path}")
     print(f"Current load distribution: {dict(request_counter)}")
     
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.request(
+            # Forward the request to the backend
+            backend_response = await client.request(
                 request.method, 
                 url, 
                 headers=dict(request.headers.items()),
@@ -74,19 +129,48 @@ async def proxy(request: Request, path: str, response: Response):
                 params=dict(request.query_params)
             )
             
-            #Parse the response
-            response_data = response.json()
+            # Get content type and check if it's JSON
+            content_type = backend_response.headers.get("content-type", "")
             
-            #Cache the response if it's a GET request
-            if request.method == "GET":
-                cache[cache_key] = {
-                    "data": response_data,
-                    "timestamp": current_time
-                }
-                print(f"Cached response for {path}")
+            # Copy headers from backend response to our response
+            for header_name, header_value in backend_response.headers.items():
+                # Skip content-length as FastAPI will set it
+                if header_name.lower() != "content-length":
+                    response.headers[header_name] = header_value
             
-            return response_data
+            # Add our cache status header
+            response.headers["X-Cache-Status"] = cache_status
+            
+            # Set status code from backend
+            response.status_code = backend_response.status_code
+            
+            # Only cache successful DB read requests with JSON responses
+            if (is_db_read and 
+                backend_response.status_code == 200 and 
+                "application/json" in content_type):
+                try:
+                    response_data = backend_response.json()
+                    
+                    # Cache the response
+                    cache[cache_key] = {
+                        "data": response_data,
+                        "timestamp": current_time
+                    }
+                    print(f"Cached response for {path}")
+                    
+                    # Maintain cache size
+                    maintain_cache_size()
+                    
+                    return response_data
+                except Exception as json_error:
+                    print(f"Error parsing JSON response: {str(json_error)}")
+                    return Response(content=backend_response.content, status_code=backend_response.status_code)
+            
+            # For non-JSON responses, return the raw content
+            return Response(content=backend_response.content, status_code=backend_response.status_code)
+            
     except Exception as e:
         print(f"Error forwarding request: {str(e)}")
+        response.status_code = 500
         return {"error": str(e)}
 

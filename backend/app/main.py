@@ -7,6 +7,7 @@ from pathlib import Path
 from database import engine, Base
 from routes import users, tweets, auth, logs, likes
 from middleware import RateLimitMiddleware, RequestCacheMiddleware
+from middleware import cache
 from routes.logs import log_api_call
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -70,6 +71,18 @@ app.include_router(likes.router)
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Twitter clone API!"}
+
+
+@app.get("/debug/cache-stats")
+async def cache_stats():
+    """Get current cache statistics for debugging"""
+    stats = {
+        "cache_size": len(cache),
+        "cached_paths": list(set(k.split(':')[1] for k in cache.keys())),
+        "oldest_cache_entry_age": min([time.time() - v["timestamp"] for v in cache.values()]) if cache else 0,
+        "newest_cache_entry_age": max([time.time() - v["timestamp"] for v in cache.values()]) if cache else 0
+    }
+    return stats
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
