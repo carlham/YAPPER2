@@ -1,6 +1,6 @@
 ## Running Yapper Locally with Docker
 
-To make local development and deployment easier, Yapper 2.0 comes with Docker support for the backend (FastAPI), frontend (React), and PostgreSQL database. All services are orchestrated using Docker Compose.
+To make local development and deployment easier, Yapper 2.0 comes with Docker support for the backend (FastAPI), frontend (React), PostgreSQL database, and Nginx cache server. All services are orchestrated using Docker Compose.
 
 ### Requirements
 - [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) installed on your machine.
@@ -18,6 +18,10 @@ To make local development and deployment easier, Yapper 2.0 comes with Docker su
   - Uses the official `postgres:latest` image
   - Runs on port **5433**
   - Default credentials (see below)
+- **Nginx Cache Server**
+  - Provides load balancing and caching for the backend API
+  - Frontend proxy on port **80**
+  - API cache endpoint on port **8080**
 
 - **PostgreSQL default environment (from `docker-compose.yml`):**
   - `POSTGRES_USER=postgres`
@@ -25,21 +29,28 @@ To make local development and deployment easier, Yapper 2.0 comes with Docker su
   - `POSTGRES_DB=postgres`
 
 ### Building and Running the Project
+
+The project comes with a unified management script that makes it easy to run and manage all services:
+
 1. **Clone the repository** (if you haven't already):
    ```sh
    git clone https://github.com/carlham/YAPPER2
    cd YAPPER2
    ```
-2. **Start all services:**
+
+2. **Run the application using Docker**:
    ```sh
    docker compose up --build
    ```
-   This will build and start the backend, frontend, and database containers. The first build may take a few minutes.
 
-3. **Access the services:**
+3. **Access the application**:
    - **Frontend:** [http://localhost:3000](http://localhost:3000)
    - **Backend API:** [http://localhost:8000](http://localhost:8000)
+   - **Direct backend access:** [http://localhost:8000](http://localhost:8000)
    - **PostgreSQL:** localhost:5433 (for development tools)
+   
+The cache server runs within the Nginx container and automatically distributes requests to the backend servers while caching responses for improved performance.
+
 
 ### Special Notes
 - The backend service depends on the database and will wait for it to be ready before starting.
@@ -52,6 +63,7 @@ To make local development and deployment easier, Yapper 2.0 comes with Docker su
 - **Frontend:** 3000
 - **Backend:** 8000
 - **Database:** 5433
+- **Backend with caching:** 8080
 
 ---
 
