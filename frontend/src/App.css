@@ -136,6 +136,7 @@ main:has(form) {
 
 .yap p {
   margin: .3rem;
+  overflow-wrap: break-word;
 }
 
 .logoutBtn:hover, .closePopup:hover {
