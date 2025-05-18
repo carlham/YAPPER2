@@ -13,19 +13,25 @@ router = APIRouter(
 
 @router.get("", response_model=List[UserResponse])
 def read_users(db: Session = Depends(get_db)):
-    users = db.query(UserModel).all()
+    from database import get_cached_query
+    query = db.query(UserModel)
+    users = get_cached_query(query).all()
     return users
 
 # searching for users
 @router.get("/search", response_model=List[UserResponse])
 def search_users(query: str, db: Session = Depends(get_db)):
-    users = db.query(UserModel).filter(UserModel.username.ilike(f"%{query}%")).all() 
+    from database import get_cached_query
+    search_query = db.query(UserModel).filter(UserModel.username.ilike(f"%{query}%"))
+    users = get_cached_query(search_query).all() 
     return users
 
 #get a user by id
 @router.get("/{user_id}", response_model=UserResponse)
 def read_user(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(UserModel).filter(UserModel.id == user_id).first()
+    from database import get_cached_query
+    query = db.query(UserModel).filter(UserModel.id == user_id)
+    user = get_cached_query(query).first()
     if user is None:
         return {"error": "User not found"}
     return user

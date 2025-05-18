@@ -34,6 +34,13 @@ DB_READ_PATHS = [
     r"^/likes/\d+$",              # Get likes for a tweet
 ]
 
+# Mapping of write endpoints to related cached endpoints that should be invalidated
+CACHE_INVALIDATION_MAP = {
+    r"^/tweets$": [r"^/tweets$", r"^/users/\d+/tweets$"],  # POST to /tweets should invalidate all tweet lists
+    r"^/tweets/\d+$": [r"^/tweets$", r"^/tweets/\d+$", r"^/users/\d+/tweets$"],  # PUT/DELETE to a tweet
+    r"^/likes$": [r"^/likes/\d+$", r"^/tweets/\d+$"],  # POST to /likes should invalidate related tweets and likes
+}
+
 with open("servers.json") as f:
     servers = json.load(f)
 
@@ -59,6 +66,48 @@ def is_db_read_request(method: str, path: str) -> bool:
     
     return False
 
+def is_write_request(method: str) -> bool:
+    """Check if this is a write operation"""
+    return method in ["POST", "PUT", "DELETE", "PATCH"]
+
+def get_paths_to_invalidate(method: str, path: str) -> List[str]:
+    """Get a list of cache path patterns that should be invalidated for this write request"""
+    if not is_write_request(method):
+        return []
+        
+    paths_to_invalidate = []
+    
+    # Check each pattern to see if it matches the current path
+    for pattern, invalidation_patterns in CACHE_INVALIDATION_MAP.items():
+        if re.match(pattern, path):
+            paths_to_invalidate.extend(invalidation_patterns)
+    
+    return paths_to_invalidate
+
+def invalidate_cache_entries(patterns: List[str]):
+    """Invalidate all cache entries matching the specified path patterns"""
+    if not patterns:
+        return
+        
+    keys_to_delete = []
+    
+    for cache_key in cache.keys():
+        # Extract path from cache key (format: "METHOD:path:query:auth")
+        parts = cache_key.split(":", 2)
+        if len(parts) >= 2:
+            cached_path = parts[1]
+            
+            # Check if this cached path matches any of our patterns to invalidate
+            for pattern in patterns:
+                if re.match(pattern, cached_path):
+                    keys_to_delete.append(cache_key)
+                    break
+    
+    # Delete the keys
+    for key in keys_to_delete:
+        del cache[key]
+        print(f"Invalidated cache for {key}")
+
 def generate_cache_key(request: Request, path: str) -> str:
     """Generate a unique cache key based on the request method, path, and query parameters."""
     query_string = request.url.query.decode() if request.url.query else ""
@@ -83,7 +132,7 @@ def maintain_cache_size():
             if sorted_keys:
                 del cache[sorted_keys.pop(0)]
 
-@app.get("/{path:path}")
+@app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
 async def proxy(request: Request, path: str, response: Response):
     # Check if this is a cacheable database read request
     is_db_read = is_db_read_request(request.method, path)
@@ -95,7 +144,13 @@ async def proxy(request: Request, path: str, response: Response):
     current_time = time.time()
     cache_status = "MISS"
     
-    if is_db_read and cache_key in cache:
+    # Check if this is a write operation that should invalidate cache entries
+    if is_write_request(request.method):
+        paths_to_invalidate = get_paths_to_invalidate(request.method, path)
+        invalidate_cache_entries(paths_to_invalidate)
+        cache_status = "BYPASS"  # This request is bypassing cache
+    # For GET requests, check cache
+    elif is_db_read and cache_key in cache:
         cached_data = cache[cache_key]
         if current_time - cached_data["timestamp"] < CACHE_EXPIRATION:
             print(f"Cache hit for {path}")
@@ -130,16 +185,23 @@ async def proxy(request: Request, path: str, response: Response):
             )
             
             # Get content type and check if it's JSON
-            content_type = backend_response.headers.get("content-type", "")
-            
-            # Copy headers from backend response to our response
+            content_type = backend_response.headers.get("content-type", "")            # Copy headers from backend response to our response
             for header_name, header_value in backend_response.headers.items():
                 # Skip content-length as FastAPI will set it
                 if header_name.lower() != "content-length":
                     response.headers[header_name] = header_value
+              # Never override the X-Cache-Status from Nginx
+            # Instead, we'll add our own status with a different name
+            response.headers["X-Proxy-Cache-Status"] = cache_status
             
-            # Add our cache status header
-            response.headers["X-Cache-Status"] = cache_status
+            # If we don't see an Nginx cache status, explicitly note that
+            if "X-Cache-Status" not in backend_response.headers:
+                response.headers["X-Cache-Status-Note"] = "Not set by Nginx"
+            
+            # Add more detailed cache information for debugging
+            if is_db_read:
+                response.headers["X-Cache-Type"] = "DB_READ"
+                response.headers["X-Cache-Key"] = cache_key
             
             # Set status code from backend
             response.status_code = backend_response.status_code
@@ -173,4 +235,3 @@ async def proxy(request: Request, path: str, response: Response):
         print(f"Error forwarding request: {str(e)}")
         response.status_code = 500
         return {"error": str(e)}
-

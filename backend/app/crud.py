@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 import models, schemas
 from passlib.context import CryptContext
+from database import get_cached_query
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -8,11 +9,13 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 #Retreiving a user by their id
 def get_user(db: Session, user_id: int):
-    return db.query(models.UserModel).filter(models.UserModel.usernamec == user_id).first()
+    query = db.query(models.UserModel).filter(models.UserModel.usernamec == user_id)
+    return get_cached_query(query).first()
 
 #Retrieving user by their username
 def get_user_by_username(db: Session, username: int):
-    return db.query(models.UserModel).filter(models.UserModel.username == username).first()
+    query = db.query(models.UserModel).filter(models.UserModel.username == username)
+    return get_cached_query(query).first()
 
 #Creating a new user
 def create_user(db: Session, user: schemas.UserCreate):

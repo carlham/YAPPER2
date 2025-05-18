@@ -65,6 +65,37 @@ The cache server runs within the Nginx container and automatically distributes r
 - **Database:** 5433
 - **Backend with caching:** 8080
 
+## Caching Architecture
+
+Yapper 2.0 implements a multi-layer caching strategy to optimize performance:
+
+### 1. Request-Level Caching
+- FastAPI middleware implementation for caching HTTP GET responses
+- Caches are stored in memory with a 60-second expiration
+- Includes cache headers for debugging
+
+### 2. Database Query Caching
+- SQLAlchemy query results are cached based on query hash
+- Reduces database load for frequently executed queries
+- Configurable via environment variable `ENABLE_DB_CACHE=True`
+
+### 3. Nginx Reverse Proxy Caching
+- HTTP-level caching at the infrastructure layer
+- Configured in `nginx/nginx.conf` with dedicated cache volume
+- Cache invalidation based on time expiration
+
+### 4. Load Balancing
+- Round-robin distribution across multiple backend instances
+- Improved fault tolerance and scalability
+
+### Cache Monitoring
+The application provides debugging endpoints for cache observation:
+- `/debug/cache-stats` - Request cache statistics
+- `/debug/db-cache-stats` - Database query cache statistics
+- `/debug/clear-db-cache` - Manually clear database cache
+
+For more details, see [Backend Caching Documentation](backend/app/README_CACHING.md).
+
 ---
 
 (Existing documentation continues below, add later)

@@ -1,4 +1,4 @@
-#!/bin/sh
+﻿#!/bin/sh
 # Start cache server in background
 cd /app
 export PATH="/opt/venv/bin:$PATH"

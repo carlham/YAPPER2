@@ -4,6 +4,10 @@ from starlette.responses import Response
 import time
 from collections import defaultdict
 
+# Global cache dictionary for storing responses
+# Structure: {request_key: {"response": response_data, "timestamp": timestamp}}
+cache = {}
+
 # Rate limiting middleware to limit the number of requests from a client withing specified time window
 class RateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, max_requests: int = 10, window_seconds: int = 60):
@@ -46,8 +50,8 @@ class RequestCacheMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
         # Initialize the cache dictionary for storing responses
-        # Structure: {request_key: {"response": response_data, "timestamp": timestamp}}
-        self.cache = {}
+        # The cache dictionary is defined globally at the top of this file
+        global cache
         # Cache expiration time in seconds (1 minute)
         self.cache_expiration = 60
     
@@ -56,7 +60,75 @@ class RequestCacheMiddleware(BaseHTTPMiddleware):
         if request.method != "GET":
             # For non-GET requests, just pass through
             return await call_next(request)
+            
+        # Generate a cache key for this request
+        cache_key = self._generate_cache_key(request)
         
-        # For now, just pass through all requests
+        # Check if we have a valid cached response
+        if cache_key in cache:
+            cached_item = cache[cache_key]
+            current_time = time.time()
+              # Check if the cached response is still valid
+            if current_time - cached_item["timestamp"] < self.cache_expiration:
+                print(f"Cache hit for {request.url.path}")
+                # Return the cached response
+                response = Response(
+                    content=cached_item["content"],
+                    status_code=cached_item["status_code"],
+                    headers=cached_item["headers"],
+                    media_type=cached_item["media_type"]
+                )
+                
+                # Ensure the cache header is present even when returning cached response
+                response.headers["X-RequestCache-Status"] = "HIT"
+                print(f"Request cache: Serving {cache_key} from cache")
+                print(f"Response headers include X-RequestCache-Status: HIT")
+                
+                return response
+        
+        # If not in cache or expired, process the request
         response = await call_next(request)
+        
+        # Only cache successful responses
+        if 200 <= response.status_code < 300:
+            # Store the response in cache
+            content = b""
+            async for chunk in response.body_iterator:
+                content += chunk
+            
+            # Create a new response with the same content
+            new_response = Response(
+                content=content,
+                status_code=response.status_code,
+                headers=dict(response.headers),
+                media_type=response.media_type
+            )
+              # Add to cache
+            cache[cache_key] = {
+                "content": content,
+                "status_code": response.status_code,
+                "headers": dict(response.headers),
+                "media_type": response.media_type,
+                "timestamp": time.time()
+            }
+            
+            # Add cache header to indicate this response was cached
+            new_response.headers["X-RequestCache-Status"] = "CACHED"
+            
+            # Debug print
+            print(f"Request cache: Added {cache_key} to cache")
+            print(f"Response headers will include X-RequestCache-Status: CACHED")
+            
+            return new_response
+        
         return response
+    
+    def _generate_cache_key(self, request: Request) -> str:
+        """Generate a unique cache key based on method, path, and query params."""
+        path = request.url.path
+        query = request.url.query.decode() if request.url.query else ""
+        
+        # Include authorization in key to prevent data leakage between users
+        auth = request.headers.get("Authorization", "noauth")
+        
+        return f"{request.method}:{path}:{query}:{auth}"

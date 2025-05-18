@@ -19,7 +19,6 @@ services:
       - javascript-frontend
     volumes:
       - nginx-cache:/var/cache/nginx
-
   python-backend-1:
     build:
       context: ./backend
@@ -34,7 +33,8 @@ services:
       - "8000:8000"
     environment:
       - PORT=8000
-      
+      - ENABLE_DB_CACHE=True
+      - DOCKER_ENV=True
   python-backend-2:
     build:
       context: ./backend
@@ -49,7 +49,8 @@ services:
       - "8001:8000"
     environment:
       - PORT=8000
-      
+      - ENABLE_DB_CACHE=True
+      - DOCKER_ENV=True
   python-backend-3:
     build:
       context: ./backend
@@ -64,6 +65,8 @@ services:
       - "8002:8000"
     environment:
       - PORT=8000
+      - ENABLE_DB_CACHE=True
+      - DOCKER_ENV=True
 
   javascript-frontend:
     build:
