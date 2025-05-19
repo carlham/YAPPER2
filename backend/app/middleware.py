@@ -50,15 +50,11 @@ class RequestCacheMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
         # Initialize the cache dictionary for storing responses
-        # The cache dictionary is defined globally at the top of this file
         global cache
-        # Cache expiration time in seconds (1 minute)
         self.cache_expiration = 60
     
     async def dispatch(self, request: Request, call_next):
-        # Only cache GET requests
         if request.method != "GET":
-            # For non-GET requests, just pass through
             return await call_next(request)
             
         # Generate a cache key for this request
@@ -86,24 +82,20 @@ class RequestCacheMiddleware(BaseHTTPMiddleware):
                 
                 return response
         
-        # If not in cache or expired, process the request
         response = await call_next(request)
         
         # Only cache successful responses
         if 200 <= response.status_code < 300:
-            # Store the response in cache
             content = b""
             async for chunk in response.body_iterator:
                 content += chunk
             
-            # Create a new response with the same content
             new_response = Response(
                 content=content,
                 status_code=response.status_code,
                 headers=dict(response.headers),
                 media_type=response.media_type
             )
-              # Add to cache
             cache[cache_key] = {
                 "content": content,
                 "status_code": response.status_code,
