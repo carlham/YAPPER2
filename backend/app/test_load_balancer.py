@@ -19,20 +19,21 @@ async def make_request(endpoint, session_id):
     url = f"{CACHE_SERVER_URL}{endpoint}"
     
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient() as client:            
             response = await client.get(url, timeout=10.0)
             duration = time.time() - start_time
             status = response.status_code
             cache_status = response.headers.get("X-Cache-Status", "UNKNOWN")
+            backend_server = response.headers.get("X-Backend-Server", "Not provided")
             
             #Try to parse response as JSON, but handle case where it's not JSON
             try:
                 data_preview = str(response.json())[:50] + "..." if len(str(response.json())) > 50 else str(response.json())
             except:
                 data_preview = str(response.text)[:50] + "..." if len(response.text) > 50 else response.text
-                
-            print(f"Session {session_id} | {endpoint} | Status: {status} | Cache: {cache_status} | Time: {duration:.4f}s | Response: {data_preview}")
-            return duration, status, cache_status
+            
+            print(f"Session {session_id} | {endpoint} | Status: {status} | Cache: {cache_status} | Backend: {backend_server} | Time: {duration:.4f}s | Response: {data_preview}")
+            return duration, status, cache_status, backend_server
     except Exception as e:
         duration = time.time() - start_time
         print(f"Session {session_id} | {endpoint} | Error: {str(e)} | Time: {duration:.4f}s")
@@ -45,10 +46,10 @@ async def test_session(session_id, iterations=3):
     cache_hits = 0
     cache_misses = 0
     total_requests = 0
-    
+    backend_servers = {}
     for i in range(iterations):
         for endpoint in TEST_ENDPOINTS:
-            duration, status, cache_status = await make_request(endpoint, session_id)
+            duration, status, cache_status, backend_server = await make_request(endpoint, session_id)
             total_requests += 1
             
             if cache_status == "HIT":

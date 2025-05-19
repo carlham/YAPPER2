@@ -16,9 +16,13 @@ router = APIRouter(
 # endpoints for tweets, get all tweets, create tweet, edit tweet and delete tweet 
 @router.get("", response_model=List[TweetResponse])
 def read_tweets(db: Session = Depends(get_db), skip: int = None, limit: int = None): # pagination if wanted
-    tweets_db = db.query(TweetsModel, UserModel.username.label("username"))\
+    # Skip cache for tweets to always get fresh data
+    query = db.query(TweetsModel, UserModel.username.label("username"))\
         .join(UserModel, TweetsModel.owner_id == UserModel.id)\
-        .offset(skip).limit(limit).all()
+        .offset(skip).limit(limit)
+        
+    tweets_db = query.all()  # Don't use cache for tweets
+    
     tweets = []
     for tweet, username in tweets_db: 
         tweet_dict = {
@@ -35,9 +39,12 @@ def read_tweets(db: Session = Depends(get_db), skip: int = None, limit: int = No
 # searching for tweets
 @router.get("/search", response_model=List[TweetResponse])
 def search_tweets(query: str, db: Session = Depends(get_db)):
-    tweets_db = db.query(TweetsModel, UserModel.username.label("username"))\
+    # Skip cache for tweet searches
+    search_query = db.query(TweetsModel, UserModel.username.label("username"))\
         .join(UserModel, TweetsModel.owner_id == UserModel.id)\
-        .filter(TweetsModel.content.ilike(f"%{query}%")).all()
+        .filter(TweetsModel.content.ilike(f"%{query}%"))
+        
+    tweets_db = search_query.all()  # Don't use cache
     
     # format like in GET tweets
     tweets = []
@@ -120,6 +127,11 @@ def create_tweet(tweet: TweetCreate, db: Session = Depends(get_db), current_user
     db.add(tweet)
     db.commit()
     db.refresh(tweet)
+    
+    # After creating a tweet, clear the database cache
+    from database import clear_db_cache
+    clear_db_cache()
+    
     return tweet
 
 @router.put("/{tweet_id}")
@@ -152,6 +164,11 @@ def update_tweet(tweet_id: int, tweet_data: TweetCreate, db: Session = Depends(g
     # commit changes to db
     db.commit()
     db.refresh(db_tweet)
+    
+    # After updating a tweet, clear the database cache
+    from database import clear_db_cache
+    clear_db_cache()
+    
     return {"message": "Tweet updated successfully"}
 
 
@@ -170,6 +187,11 @@ def delete_tweet(tweet_id: int, db: Session = Depends(get_db), current_user_id: 
     # delete tweet from db
     db.delete(db_tweet)
     db.commit()
+    
+    # After deleting a tweet, clear the database cache
+    from database import clear_db_cache
+    clear_db_cache()
+    
     return {"message": "Tweet deleted successfully"}
 
 

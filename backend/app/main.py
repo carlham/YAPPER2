@@ -5,7 +5,7 @@ import time
 import sys
 from pathlib import Path
 from database import engine, Base
-from routes import users, tweets, auth, logs, likes
+from routes import users, tweets, auth, logs, likes, cache_test
 from middleware import RateLimitMiddleware, RequestCacheMiddleware
 from middleware import cache
 from routes.logs import log_api_call
@@ -26,6 +26,7 @@ origins = [
     "http://localhost",
     "http://localhost:3000",
     "http://localhost:8000",
+    "http://localhost:8080",
     "https://yapper-4qux.onrender.com",
     "https://yapper-zwai.onrender.com"
     ]
@@ -67,6 +68,7 @@ app.include_router(tweets.router)
 app.include_router(auth.router)
 app.include_router(logs.router)
 app.include_router(likes.router)
+app.include_router(cache_test.router)
 
 @app.get("/")
 def read_root():
@@ -84,6 +86,25 @@ async def cache_stats():
     }
     return stats
 
+# Add endpoints to monitor database cache
+from database import get_db_cache_stats, clear_db_cache
+
+@app.get("/debug/db-cache-stats")
+async def db_cache_stats():
+    """Get current database cache statistics for debugging"""
+    return get_db_cache_stats()
+
+@app.post("/debug/clear-db-cache")
+async def clear_database_cache():
+    """Clear the database query cache"""
+    try:
+        result = clear_db_cache()
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
+    # Use reload=False to prevent multiprocessing issues with cache clearing
+    # You can still manually restart the server when needed
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
