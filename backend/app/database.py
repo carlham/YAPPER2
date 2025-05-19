@@ -6,8 +6,8 @@ import os
 import time
 import sys
 
-# Determine if DB caching should be enabled
-# Always enabled by default, can be disabled explicitly via environment variable
+#Determine if DB caching should be enabled
+#Always enabled by default, can be disabled explicitly via environment variable
 ENABLE_DB_CACHE = os.environ.get("ENABLE_DB_CACHE", "True").lower() == "true"
 
 #Creating SQLAlchemy engine using the config.py URL
@@ -58,7 +58,7 @@ def before_cursor_execute(conn, cursor, statement, parameters, context, executem
     log_db_access(operation, table, query_details)
     increment_db_access_count()
 
-# Database query caching integration
+#Database query caching integration
 if ENABLE_DB_CACHE:
     from db_cache import (
         hash_query, 
@@ -72,26 +72,26 @@ if ENABLE_DB_CACHE:
         Wrapper function to add caching to SQLAlchemy queries
         
         Usage example:
-            # Instead of:
-            # result = db.query(Model).filter(...).all()
+            #Instead of:
+            #result = db.query(Model).filter(...).all()
             
-            # Use:
-            # result = cached_query(db.query(Model).filter(...)).all()
+            #Use:
+            #result = cached_query(db.query(Model).filter(...)).all()
         """
-        # Original query execution method
+        #Original query execution method
         original_all = query.all
         original_first = query.first
         original_one = query.one
         original_one_or_none = query.one_or_none
         
-        # Check if query is cacheable
+        #Check if query is cacheable
         if not is_cacheable_query(query):
             return query
         
-        # Generate hash for this query
+        #Generate hash for this query
         query_hash = hash_query(query)
         
-        # Replace the execute methods with cached versions
+        #Replace the execute methods with cached versions
         def cached_all():
             found, result = get_from_cache(query_hash + "_all")
             if found:
@@ -124,7 +124,7 @@ if ENABLE_DB_CACHE:
             store_in_cache(query_hash + "_one_or_none", result)
             return result
         
-        # Replace methods with cached versions
+        #Replace methods with cached versions
         query.all = cached_all
         query.first = cached_first
         query.one = cached_one
@@ -148,7 +148,7 @@ def get_cached_query(query):
 def get_db_cache_stats():
     """Get database cache statistics for monitoring"""
     if ENABLE_DB_CACHE:
-        # Import here to avoid circular import
+        #Import here to avoid circular import
         from db_cache import get_cache_stats
         stats = get_cache_stats()
         return {
@@ -163,11 +163,11 @@ def clear_db_cache():
     """Clear the database query cache"""
     try:
         if ENABLE_DB_CACHE:
-            # Import here to avoid circular import
+            #Import here to avoid circular import
             from db_cache import clear_cache
             clear_cache()
             return {"status": "cache cleared"}
         return {"status": "cache disabled"}
     except Exception as e:
-        # Handle any exceptions that might occur
+        #Handle any exceptions that might occur
         return {"status": "error", "message": str(e)}

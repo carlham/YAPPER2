@@ -16,13 +16,12 @@ router = APIRouter(
 # endpoints for tweets, get all tweets, create tweet, edit tweet and delete tweet 
 @router.get("", response_model=List[TweetResponse])
 def read_tweets(db: Session = Depends(get_db), skip: int = None, limit: int = None): # pagination if wanted
-    # Skip cache for tweets to always get fresh data
     query = db.query(TweetsModel, UserModel.username.label("username"))\
         .join(UserModel, TweetsModel.owner_id == UserModel.id)\
         .offset(skip).limit(limit)
         
-    tweets_db = query.all()  # Don't use cache for tweets
-    
+    tweets_db = query.all() 
+
     tweets = []
     for tweet, username in tweets_db: 
         tweet_dict = {
@@ -39,12 +38,11 @@ def read_tweets(db: Session = Depends(get_db), skip: int = None, limit: int = No
 # searching for tweets
 @router.get("/search", response_model=List[TweetResponse])
 def search_tweets(query: str, db: Session = Depends(get_db)):
-    # Skip cache for tweet searches
     search_query = db.query(TweetsModel, UserModel.username.label("username"))\
         .join(UserModel, TweetsModel.owner_id == UserModel.id)\
         .filter(TweetsModel.content.ilike(f"%{query}%"))
         
-    tweets_db = search_query.all()  # Don't use cache
+    tweets_db = search_query.all()
     
     # format like in GET tweets
     tweets = []
@@ -111,8 +109,7 @@ def read_tweet(tweet_id: int, db: Session = Depends(get_db)):
 
 @router.post("", response_model=TweetResponse)
 def create_tweet(tweet: TweetCreate, db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
-    # Extract hashtags from the content using regex
-    # This regex finds words that start with a hashtag
+    #regex finds words that start with a hashtag
     hashtags = re.findall(r'#(\w+)', tweet.content)
 
     # Adding hashtags to the tags_string to be stored in the database
@@ -128,7 +125,7 @@ def create_tweet(tweet: TweetCreate, db: Session = Depends(get_db), current_user
     db.commit()
     db.refresh(tweet)
     
-    # After creating a tweet, clear the database cache
+    #After creating a tweet, clear the database cache
     from database import clear_db_cache
     clear_db_cache()
     
@@ -165,7 +162,7 @@ def update_tweet(tweet_id: int, tweet_data: TweetCreate, db: Session = Depends(g
     db.commit()
     db.refresh(db_tweet)
     
-    # After updating a tweet, clear the database cache
+    #After updating a tweet, clear the database cache
     from database import clear_db_cache
     clear_db_cache()
     

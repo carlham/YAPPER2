@@ -4,19 +4,19 @@ from sqlalchemy.orm import Session
 import time
 from datetime import datetime
 
-# Create a router for the logs endpoint
+#Create a router for the logs endpoint
 router = APIRouter(
     prefix="/logs",
     tags=["logs"]
 )
 
-# Global variable to store API call logs
+#Global variable to store API call logs
 api_logs = []
 db_access_count = 0
 db_access_logs = []
-MAX_LOGS = 1000 # Maximum number of logs to keep for memory efficiency
+MAX_LOGS = 1000 #Maximum number of logs to keep for memory efficiency
 
-# Add a function to log API calls
+#Add a function to log API calls
 def log_api_call(method: str, endpoint: str, status_code: int = 200, execution_time: float = 0):
     """
     Log API calls with method and endpoint
@@ -32,11 +32,11 @@ def log_api_call(method: str, endpoint: str, status_code: int = 200, execution_t
     }
     api_logs.append(log_entry)
     
-    # Keep only the last MAX_LOGS entries for memory efficiency
+    #Keep only the last MAX_LOGS entries for memory efficiency
     if len(api_logs) > MAX_LOGS:
         api_logs = api_logs[:MAX_LOGS]
 
-# Unsure if we want to use this, leaving it here for now (if you want to see the db logs)
+#Unsure if we want to use this, leaving it here for now (if you want to see the db logs)
 def log_db_access(operation: str, table: str, query_details: str = ""):
     """
     Log db operations
@@ -57,7 +57,7 @@ def log_db_access(operation: str, table: str, query_details: str = ""):
         db_access_logs = db_access_logs[:MAX_LOGS]
 
     
-# Add a function to increment database access count
+#Add a function to increment database access count
 def increment_db_access_count():
     global db_access_count
     db_access_count += 1
@@ -74,7 +74,7 @@ def get_logs():
     }
 
 
-# clear logs function
+#clear logs function
 @router.delete("")
 def clear_logs():
     """

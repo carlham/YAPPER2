@@ -5,7 +5,7 @@ import time
 import sys
 from pathlib import Path
 from database import engine, Base
-from routes import users, tweets, auth, logs, likes, cache_test
+from routes import users, tweets, auth, logs, likes
 from middleware import RateLimitMiddleware, RequestCacheMiddleware
 from middleware import cache
 from routes.logs import log_api_call
@@ -68,7 +68,6 @@ app.include_router(tweets.router)
 app.include_router(auth.router)
 app.include_router(logs.router)
 app.include_router(likes.router)
-app.include_router(cache_test.router)
 
 @app.get("/")
 def read_root():
