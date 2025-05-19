@@ -97,5 +97,3 @@ The application provides debugging endpoints for cache observation:
 For more details, see [Backend Caching Documentation](backend/app/README_CACHING.md).
 
 ---
-
-(Existing documentation continues below, add later)
